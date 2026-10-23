@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Oralis — Oral Image Classification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=DM+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --burgundy: #800020;
+      --burgundy-deep: #5C0017;
+      --burgundy-light: #9B1A38;
+      --ivory: #FFFFF0;
+      --surface: #F8F7F4;
+      --surface-card: #FFFFFF;
+      --charcoal: #2F3E46;
+      --muted: #55646C;
+      --coral: #C23B22;
+      --line: rgba(47, 62, 70, .14);
+      --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+      --sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
+      --pad: clamp(20px, 3.2vw, 48px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--burgundy);
+      color: var(--charcoal);
+      font: 400 1rem/1.6 var(--sans);
+      padding: calc(env(safe-area-inset-top, 0px) + clamp(12px, 4vw, 56px)) clamp(10px, 4vw, 64px) calc(env(safe-area-inset-bottom, 0px) + clamp(12px, 4vw, 56px));
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--burgundy);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+
+    .sheet {
+      position: relative;
+      max-width: 1360px;
+      margin: 0 auto;
+      background: var(--ivory);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px -40px rgba(30, 0, 8, .7);
+    }
+
+    /* Dimmed watercolor, hero only */
+    .decor {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 640px;
+      pointer-events: none;
+    }
+
+    .decor svg {
+      position: absolute;
+      opacity: 0;
+      animation: dim 1.6s .4s ease forwards;
+    }
+
+    .d1 {
+      width: min(34vw, 460px);
+      right: 5%;
+      top: calc(min(34vw, 460px) * -.62);
+    }
+
+    .d2 {
+      width: min(15vw, 210px);
+      left: calc(min(15vw, 210px) * -.42);
+      top: clamp(170px, 21vw, 330px);
+    }
+
+    @keyframes dim {
+      to {
+        opacity: .22;
+      }
+    }
+
+    /* Nav */
+    nav {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px var(--pad) 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font: 500 1.55rem/1 var(--serif);
+      color: var(--charcoal);
+      text-decoration: none;
+    }
+
+    .logo svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .95rem;
+      font-weight: 500;
+      padding: 6px 0;
+      transition: color .2s;
+    }
+
+    .links a:hover {
+      color: var(--burgundy);
+    }
+
+    .tag {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Headline */
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 80px 0 clamp(40px, 6vw, 64px);
+      padding: 0 calc(var(--pad) + 60px);
+      font: 600 clamp(2.2rem, 6.2vw, 5.8rem)/.98 var(--serif);
+      letter-spacing: -.035em;
+      color: var(--burgundy);
+      pointer-events: none;
+    }
+
+    .ln {
+      display: block;
+      overflow: hidden;
+      padding-bottom: .1em;
+      font-weight: inherit;
+    }
+
+    .ln span {
+      display: block;
+      transform: translateY(108%);
+      animation: up 1s cubic-bezier(.2, .8, .2, 1) forwards;
+    }
+
+    .ln:nth-child(2) {
+      text-align: right;
+      margin-top: -.04em;
+    }
+
+    .ln:nth-child(2) span {
+      animation-delay: .18s;
+    }
+
+    @keyframes up {
+      to {
+        transform: none;
+      }
+    }
+
+    /* Hero Section: How it reads + 3D Monument in front of it */
+    .content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: clamp(24px, 5vw, 64px);
+      align-items: center;
+      padding: clamp(32px, 4.5vw, 60px) var(--pad) clamp(44px, 5vw, 68px);
+    }
+
+    .intro {
+      position: relative;
+      z-index: 2;
+    }
+
+    .intro h2 {
+      margin: 0 0 16px;
+      font: 500 clamp(1.8rem, 2.8vw, 2.4rem)/1.15 var(--serif);
+      letter-spacing: -.015em;
+      color: var(--charcoal);
+    }
+
+    .intro p {
+      margin: 0 0 16px;
+      max-width: 48ch;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    .intro .highlight {
+      color: var(--burgundy);
+      font-weight: 500;
+    }
+
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 24px 0 28px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .95rem;
+      color: var(--charcoal);
+    }
+
+    .feature-bullet {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--burgundy);
+      flex-shrink: 0;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--burgundy);
+      color: var(--ivory);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: .95rem;
+      padding: 12px 22px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(128, 0, 32, .25);
+      transition: background .2s, transform .2s, box-shadow .2s;
+    }
+
+    .hero-cta:hover {
+      background: var(--burgundy-deep);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(128, 0, 32, .32);
+    }
+
+    /* 3D Monument Area in front of "How it reads" */
+    .monument-showcase {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      perspective: 1200px;
+      padding: 10px 0;
+      user-select: none;
+    }
+
+    .monument-halo {
+      position: absolute;
+      width: min(380px, 85%);
+      height: min(380px, 85%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(128, 0, 32, .08) 0%, rgba(201, 138, 148, .05) 50%, transparent 75%);
+      filter: blur(24px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .monument-stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      transition: transform .12s cubic-bezier(.16, 1, .3, 1);
+      will-change: transform;
+    }
+
+    .monument-floater {
+      animation: floatMonument 5.6s ease-in-out infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      filter: drop-shadow(0 18px 28px rgba(47, 62, 70, .14)) drop-shadow(0 4px 8px rgba(128, 0, 32, .08));
+    }
+
+    .monument-img {
+      width: 100%;
+      max-width: 380px;
+      max-height: 440px;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* Dynamic breathing shadow underneath monument */
+    .monument-shadow {
+      width: 240px;
+      height: 20px;
+      background: radial-gradient(ellipse at center, rgba(47, 62, 70, .28) 0%, rgba(47, 62, 70, .06) 60%, transparent 80%);
+      border-radius: 50%;
+      margin-top: -6px;
+      animation: shadowBreathe 5.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+
+    @keyframes floatMonument {
+
+      0%,
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-16px) rotate(0.6deg);
+      }
+    }
+
+    @keyframes shadowBreathe {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: .45;
+      }
+
+      50% {
+        transform: scale(.84);
+        opacity: .2;
+      }
+    }
+
+    /* Lower Section: Analyzer & PDF Report Builder (Moved Down) */
+    .analyzer-wrap {
+      position: relative;
+      z-index: 1;
+      padding: clamp(32px, 5vw, 64px) var(--pad) clamp(44px, 6vw, 80px);
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+    }
+
+    .analyzer-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto clamp(24px, 4vw, 36px);
+    }
+
+    .analyzer-header .tag {
+      color: var(--burgundy);
+    }
+
+    .analyzer-header h2 {
+      margin: 8px 0 10px;
+      font: 500 clamp(1.9rem, 3.2vw, 2.6rem)/1.15 var(--serif);
+      letter-spacing: -.02em;
+      color: var(--charcoal);
+    }
+
+    .analyzer-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .card {
+      max-width: 660px;
+      margin: 0 auto;
+      background: var(--surface-card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: clamp(22px, 3.6vw, 34px);
+      box-shadow: 0 20px 45px -15px rgba(47, 62, 70, .1);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 5px;
+      margin-bottom: 20px;
+      background: rgba(47, 62, 70, .07);
+      border-radius: 12px;
+    }
+
+    .tabs button {
+      flex: 1;
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, color .2s, box-shadow .2s;
+    }
+
+    .tabs button[aria-selected="true"] {
+      background: #fff;
+      color: var(--burgundy);
+      box-shadow: 0 2px 5px rgba(47, 62, 70, .12);
+    }
+
+    .drop {
+      position: relative;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 4px;
+      min-height: 220px;
+      padding: 28px 24px;
+      border: 1.8px dashed rgba(128, 0, 32, .4);
+      border-radius: 14px;
+      background: var(--ivory);
+      cursor: pointer;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+      overflow: hidden;
+    }
+
+    .drop:hover,
+    .drop.over {
+      border-color: var(--burgundy);
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(128, 0, 32, .08);
+    }
+
+    .drop:focus-within {
+      outline: 3px solid var(--burgundy);
+      outline-offset: 3px;
+    }
+
+    .drop input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .drop strong {
+      font: 500 1.35rem/1.2 var(--serif);
+      color: var(--charcoal);
+    }
+
+    .drop span {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .drop svg {
+      width: 38px;
+      height: 38px;
+      color: var(--burgundy);
+      margin-bottom: 8px;
+    }
+
+    .drop img {
+      display: none;
+      width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+    }
+
+    .drop.has-file {
+      padding: 0;
+      border-style: solid;
+      background: #fff;
+    }
+
+    .drop.has-file .empty {
+      display: none;
+    }
+
+    .drop.has-file img {
+      display: block;
+    }
+
+    .drop.busy::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3.5px;
+      width: 40%;
+      background: var(--burgundy);
+      animation: slide 1.1s ease-in-out infinite;
+    }
+
+    @keyframes slide {
+      from {
+        transform: translateX(-100%);
+      }
+
+      to {
+        transform: translateX(250%);
+      }
+    }
+
+    .file {
+      display: none;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      font-size: .92rem;
+      color: var(--muted);
+    }
+
+    .file.show {
+      display: flex;
+    }
+
+    .file span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .link {
+      background: none;
+      border: 0;
+      padding: 2px 0;
+      color: var(--burgundy);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Action Buttons Row: Analyze Image + PDF Report Builder Beside It */
+    .action-buttons-row {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .camera-action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .go {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--burgundy);
+      color: var(--ivory);
+      font-weight: 600;
+      font-size: .96rem;
+      cursor: pointer;
+      transition: background .2s, transform .15s, opacity .2s, box-shadow .2s;
+      text-align: center;
+    }
+
+    .go:hover:not(:disabled) {
+      background: var(--burgundy-deep);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(128, 0, 32, .22);
+    }
+
+    .go:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+
+    .go.loading {
+      opacity: .8;
+      cursor: wait;
+    }
+
+    .go.ghost {
+      background: transparent;
+      color: var(--burgundy);
+      border: 1.6px solid var(--burgundy);
+    }
+
+    .go.ghost:hover:not(:disabled) {
+      background: rgba(128, 0, 32, .07);
+      transform: translateY(-1px);
+    }
+
+    .go.ghost.ready {
+      background: rgba(128, 0, 32, .08);
+      border-color: var(--burgundy);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(128, 0, 32, .12);
+    }
+
+    .go.ghost.ready:hover {
+      background: var(--burgundy);
+      color: var(--ivory);
+    }
+
+    .btn-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    #result:not(:empty) {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      animation: fadeIn .4s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .k {
+      margin: 0;
+      font-size: .84rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .cls {
+      margin: 4px 0 16px;
+      font: 500 clamp(1.9rem, 3.4vw, 2.5rem)/1.1 var(--serif);
+      color: var(--burgundy);
+      word-break: break-word;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .num {
+      font: 600 1.45rem/1 var(--serif);
+      color: var(--charcoal);
+    }
+
+    .track {
+      height: 7px;
+      margin: 9px 0 12px;
+      background: rgba(47, 62, 70, .12);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0;
+      background: var(--burgundy);
+      border-radius: 6px;
+      transition: width 1s ease;
+    }
+
+    .sub {
+      margin: 0;
+      font-size: .93rem;
+      color: var(--muted);
+    }
+
+    .sub.warn,
+    .err {
+      color: var(--coral);
+      font-weight: 500;
+    }
+
+    .err {
+      margin: 0;
+    }
+
+    .result-report-action {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .notice {
+      margin: 22px 0 0;
+      padding-left: 14px;
+      border-left: 3px solid var(--coral);
+      font-size: .84rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .cam {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--charcoal);
+    }
+
+    .cam video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cam .off {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: var(--ivory);
+      opacity: .88;
+      font-size: .96rem;
+    }
+
+    .cam.on .off {
+      display: none;
+    }
+
+    .cam.busy::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3.5px;
+      width: 40%;
+      background: var(--ivory);
+      animation: slide 1.1s ease-in-out infinite;
+    }
+
+    @media (max-width: 900px) {
+      .links {
+        display: none;
+      }
+
+      .content {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+
+      .intro p {
+        max-width: 100%;
+      }
+
+      .monument-showcase {
+        order: 2;
+        margin-top: 10px;
+      }
+
+      .monument-img {
+        max-width: 320px;
+        max-height: 380px;
+      }
+
+      .ln:nth-child(2) {
+        text-align: left;
+      }
+
+      .d1 {
+        width: 52vw;
+        right: -8%;
+        top: -9%;
+      }
+
+      .d2 {
+        display: none;
+      }
+    }
+
+    @media (max-width: 580px) {
+      .action-buttons-row {
+        grid-template-columns: 1fr;
+      }
+
+      .camera-action-row {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        padding-top: 18px;
+      }
+
+      .tag {
+        display: none;
+      }
+
+      .drop {
+        min-height: 180px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      .ln span {
+        transform: none;
+      }
+
+      .decor svg {
+        opacity: .22;
+      }
+
+      .monument-floater {
+        animation: none !important;
+      }
+
+      .monument-shadow {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="wc" x="-12%" y="-12%" width="124%" height="124%">
+        <feTurbulence type="fractalNoise" baseFrequency=".022" numOctaves="3" seed="7" result="n" />
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+      <filter id="bleed" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="3" result="n" />
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="12" xChannelSelector="G" yChannelSelector="R" result="d" />
+        <feGaussianBlur in="d" stdDeviation="1.6" />
+      </filter>
+      <radialGradient id="pool" cx="45%" cy="40%" r="70%">
+        <stop offset="0" stop-color="#FFFDF3" />
+        <stop offset=".7" stop-color="#F6E4E1" />
+        <stop offset="1" stop-color="#E6C6C8" />
+      </radialGradient>
+      <symbol id="cell" viewBox="0 0 400 400">
+        <g filter="url(#wc)">
+          <circle cx="200" cy="200" r="176" fill="url(#pool)" />
+          <circle cx="200" cy="200" r="176" fill="none" stroke="#800020" stroke-width="22" opacity=".82" />
+          <circle cx="200" cy="200" r="166" fill="none" stroke="#B04A5E" stroke-width="5" opacity=".38" />
+        </g>
+        <g filter="url(#bleed)">
+          <ellipse cx="130" cy="120" rx="70" ry="9" transform="rotate(14 130 120)" fill="#C98A94" opacity=".32" />
+          <circle cx="250" cy="252" r="62" fill="#800020" opacity=".86" />
+          <circle cx="236" cy="240" r="15" fill="#4A0012" opacity=".55" />
+          <circle cx="272" cy="272" r="11" fill="#4A0012" opacity=".5" />
+          <circle cx="112" cy="168" r="22" fill="#B04A5E" opacity=".72" />
+        </g>
+        <g fill="none" stroke="#fff" stroke-width="2.2" opacity=".85">
+          <circle cx="118" cy="252" r="15" />
+          <circle cx="302" cy="128" r="9" />
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="sheet" id="top">
+    <div class="decor" aria-hidden="true">
+      <svg class="d1" viewBox="0 0 400 400">
+        <use href="#cell" />
+      </svg>
+      <svg class="d2" viewBox="0 0 400 400">
+        <use href="#cell" />
+      </svg>
+    </div>
+
+    <nav aria-label="Primary">
+      <a class="logo" href="#top">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.5" fill="none" stroke="#800020" stroke-width="2.4" />
+          <circle cx="14" cy="14" r="4.6" fill="#B04A5E" />
+        </svg>
+        oralis
+      </a>
+      <div class="links">
+        <a href="#about">How it reads</a>
+        <a href="#analyzer">Classify &amp; Report</a>
+        <a href="#notice">Notice</a>
+      </div>
+    </nav>
+
+    <h1><b class="ln"><span>A Closer Look</span></b><b class="ln"><span>at Oral Cancer.</span></b></h1>
+
+    <!-- Hero Section: "How it reads" on left, 3D Monument moving animation in front of it on right -->
+    <div class="content">
+      <section class="intro" id="about">
+        <h2>How it reads</h2>
+        <p>Upload a clinical oral photograph or use your live camera. Our specialized <span class="highlight">Swin
+            Transformer deep learning architecture</span> processes the oral tissue patterns and returns the classified
+          category alongside a calibrated confidence score.</p>
+        <p>The score reflects the statistical certitude of the model's visual classification, providing transparent
+          insight into automated pre-screening assessment.</p>
+
+        <div class="features-list">
+          <div class="feature-item"><span class="feature-bullet"></span><span>Vision Swin Transformer oral lesion
+              classifier</span></div>
+          <div class="feature-item"><span class="feature-bullet"></span><span>Real-time in-browser inference &amp;
+              camera support</span></div>
+          <div class="feature-item"><span class="feature-bullet"></span><span>One-click PDF diagnostic report
+              builder</span></div>
+        </div>
+
+        <a href="#analyzer" class="hero-cta">
+          <span>Start Classification &amp; Report</span>
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd"
+              d="M10 3a1 1 0 011 1v10.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 14.586V4a1 1 0 011-1z"
+              clip-rule="evenodd" />
+          </svg>
+        </a>
+      </section>
+
+      <!-- 3D Monument with Moving Floating Animation & Interactive Tilt -->
+      <div class="monument-showcase" id="monumentShowcase" aria-label="3D Oral Examination Monument Showcase">
+        <div class="monument-halo" aria-hidden="true"></div>
+        <div class="monument-stage" id="monumentStage">
+          <div class="monument-floater" id="monumentFloater">
+            <picture id="monumentPicture">
+              <source srcset="/static/monument.webp" type="image/webp">
+              <source srcset="../static/monument.webp" type="image/webp">
+              <source srcset="monument.webp" type="image/webp">
+              <img src="/static/monument.png" alt="3D Oral Examination Clinical Monument" class="monument-img"
+                id="monumentImg" onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src='../static/monument.png';}">
+            </picture>
+          </div>
+          <div class="monument-shadow" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lower Section: Moved Down Analyzer & PDF Report Builder -->
+    <div class="analyzer-wrap" id="analyzer">
+      <div class="analyzer-header">
+        <span class="tag">[Diagnostic Tool]</span>
+        <h2>Oral Screening &amp; Report Builder</h2>
+        <p>Upload a photograph or capture with your camera to initiate instant AI classification and generate a
+          standardized PDF clinical summary.</p>
+      </div>
+
+      <section class="card" id="uploadCard" aria-label="Analyze an image">
+        <div class="tabs" role="tablist" aria-label="Image source">
+          <button type="button" role="tab" id="tabUpload" aria-selected="true" aria-controls="paneUpload">Upload
+            Photo</button>
+          <button type="button" role="tab" id="tabCamera" aria-selected="false" aria-controls="paneCamera">Live
+            Camera</button>
+        </div>
+
+        <!-- Upload Pane -->
+        <div id="paneUpload" role="tabpanel" aria-labelledby="tabUpload">
+          <form id="uploadForm" novalidate>
+            <label class="drop" id="drop" for="image">
+              <div class="empty">
+                <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 24V8M11 14l7-7 7 7M6 26v2a2 2 0 002 2h20a2 2 0 002-2v-2" />
+                </svg>
+                <div><strong>Drop a photograph here</strong></div>
+                <span>or click to choose. JPG, PNG or WebP, up to 10 MB.</span>
+              </div>
+              <img id="preview" alt="Preview of the selected image">
+              <input type="file" id="image" name="image" accept="image/*" aria-label="Choose an image to analyze"
+                required>
+            </label>
+            <div class="file" id="fileRow"><span id="fileName"></span><button type="button" class="link"
+                id="clearBtn">Remove</button></div>
+
+            <!-- Side-by-Side: Analyze Image & PDF Report Builder -->
+            <div class="action-buttons-row">
+              <button type="submit" class="go" id="submitBtn" disabled>
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+                    clip-rule="evenodd" />
+                </svg>
+                <span>Analyze image</span>
+              </button>
+              <button type="button" class="go ghost btn-report" id="pdfReportBtn" disabled
+                title="Analyze an image first to build a PDF report">
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                    clip-rule="evenodd" />
+                </svg>
+                <span id="pdfBtnText">PDF Report Builder</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Camera Pane -->
+        <div id="paneCamera" role="tabpanel" aria-labelledby="tabCamera" hidden>
+          <div class="cam" id="camBox">
+            <video id="camera" autoplay playsinline muted aria-label="Live camera preview"></video>
+            <div class="off">Camera is off. Select Start camera and allow access when asked.</div>
+          </div>
+          <div class="camera-action-row">
+            <button type="button" class="go ghost" id="startCamera">Start camera</button>
+            <button type="button" class="go" id="capture" disabled>Capture &amp; analyze</button>
+            <button type="button" class="go ghost btn-report" id="camPdfReportBtn" disabled
+              title="Analyze an image first to build a PDF report">
+              <span>PDF Report Builder</span>
+            </button>
+          </div>
+          <canvas id="canvas" hidden></canvas>
+        </div>
+
+        <!-- Classification Result -->
+        <div id="result" aria-live="polite"></div>
+
+        <!-- Hidden PDF Report Submission Form -->
+        <form id="reportForm" action="/download-report" method="POST" hidden>
+          <input type="hidden" name="prediction" id="reportPrediction">
+          <input type="hidden" name="confidence" id="reportConfidence">
+          <button type="submit" id="downloadReport" hidden>Download PDF report</button>
+        </form>
+
+        <p class="notice" id="notice">Educational prototype. Results are not a medical diagnosis and must not guide
+          healthcare decisions. If you have a health concern, see a qualified clinician. This prototype does not save
+          your image.</p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const MAX_MB = 10;
+    const $ = (id) => document.getElementById(id);
+    const form = $("uploadForm"), input = $("image"), drop = $("drop"), preview = $("preview");
+    const button = $("submitBtn"), fileRow = $("fileRow"), resultBox = $("result");
+    const pdfReportBtn = $("pdfReportBtn"), camPdfReportBtn = $("camPdfReportBtn");
+    const reportForm = $("reportForm"), reportBtn = $("downloadReport");
+    let previewUrl = null;
+
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    function updateReportButtons(enabled) {
+      reportBtn.disabled = !enabled;
+      if (pdfReportBtn) {
+        pdfReportBtn.disabled = !enabled;
+        if (enabled) {
+          pdfReportBtn.classList.add("ready");
+          pdfReportBtn.setAttribute("title", "Click to download the PDF diagnostic report");
+          $("pdfBtnText").textContent = "Download PDF Report";
+        } else {
+          pdfReportBtn.classList.remove("ready");
+          pdfReportBtn.setAttribute("title", "Analyze an image first to build a PDF report");
+          $("pdfBtnText").textContent = "PDF Report Builder";
+        }
+      }
+      if (camPdfReportBtn) {
+        camPdfReportBtn.disabled = !enabled;
+        if (enabled) {
+          camPdfReportBtn.classList.add("ready");
+          camPdfReportBtn.setAttribute("title", "Click to download the PDF diagnostic report");
+        } else {
+          camPdfReportBtn.classList.remove("ready");
+          camPdfReportBtn.setAttribute("title", "Analyze an image first to build a PDF report");
+        }
+      }
+    }
+
+    function clearReport() {
+      reportForm.hidden = true;
+      updateReportButtons(false);
+      $("reportPrediction").value = "";
+      $("reportConfidence").value = "";
+    }
+
+    function handlePdfReportClick() {
+      const pred = $("reportPrediction").value;
+      if (!pred) {
+        alert("Please select or capture an image and click 'Analyze image' first before building a PDF report.");
+        return;
+      }
+      reportForm.submit();
+    }
+
+    if (pdfReportBtn) pdfReportBtn.addEventListener("click", handlePdfReportClick);
+    if (camPdfReportBtn) camPdfReportBtn.addEventListener("click", handlePdfReportClick);
+
+    function showError(message) {
+      clearReport();
+      resultBox.replaceChildren(el("p", "err", message));
+    }
+
+    function setFile(file) {
+      resultBox.replaceChildren();
+      clearReport();
+      if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+      if (!file) {
+        input.value = "";
+        drop.classList.remove("has-file");
+        fileRow.classList.remove("show");
+        button.disabled = true;
+        return;
+      }
+      if (!file.type.startsWith("image/")) {
+        setFile(null);
+        showError("That file isn’t an image. Choose a JPG, PNG or WebP photograph.");
+        return;
+      }
+      if (file.size > MAX_MB * 1048576) {
+        setFile(null);
+        showError("That image is over " + MAX_MB + " MB. Choose a smaller one.");
+        return;
+      }
+      previewUrl = URL.createObjectURL(file);
+      preview.src = previewUrl;
+      drop.classList.add("has-file");
+      $("fileName").textContent = file.name;
+      fileRow.classList.add("show");
+      button.disabled = false;
+    }
+
+    input.addEventListener("change", () => setFile(input.files[0]));
+    $("clearBtn").addEventListener("click", () => setFile(null));
+    ["dragenter", "dragover"].forEach(e => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(e => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", (ev) => {
+      const file = ev.dataTransfer.files[0];
+      if (!file) return;
+      const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; setFile(file);
+    });
+
+    function showResult(output) {
+      const pct = Math.max(0, Math.min(100, Number(output.confidence) || 0));
+      const row = el("div", "row");
+      row.append(el("span", "k", "Confidence"), el("span", "num", pct.toFixed(1) + "%"));
+      const track = el("div", "track"), fill = el("div", "fill");
+      track.append(fill);
+      const sub = el("p", "sub", pct < 60 ? "Low confidence. Treat this result with extra caution." : "How sure the model is about this class.");
+      if (pct < 60) sub.classList.add("warn");
+
+      const actionRow = el("div", "result-report-action");
+      const again = el("button", "link", "Analyze another image");
+      again.type = "button";
+      again.addEventListener("click", () => setFile(null));
+
+      const downloadReportBtn = el("button", "link", "Export PDF Report ↓");
+      downloadReportBtn.type = "button";
+      downloadReportBtn.addEventListener("click", handlePdfReportClick);
+
+      actionRow.append(again, downloadReportBtn);
+
+      resultBox.replaceChildren(
+        el("p", "k", "Predicted class"),
+        el("h2", "cls", output.prediction),
+        row,
+        track,
+        sub,
+        actionRow
+      );
+      requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = pct + "%"; }));
+    }
+
+    async function analyze(file, zone, btn, idleText, restore) {
+      btn.disabled = true; btn.classList.add("loading"); btn.textContent = "Analyzing…";
+      zone.classList.add("busy"); resultBox.replaceChildren(); clearReport();
+      try {
+        const data = new FormData();
+        data.append("image", file, file.name || "camera.jpg");
+        const response = await fetch("/predict", { method: "POST", body: data });
+        let result = {};
+        try { result = await response.json(); } catch (_) { }
+        if (!response.ok) throw new Error(result.error || "Prediction failed.");
+
+        if (!result.error) {
+          document.getElementById("reportPrediction").value = result.prediction;
+          document.getElementById("reportConfidence").value = result.confidence;
+          reportForm.hidden = false;
+          updateReportButtons(true);
+        }
+
+        showResult(result);
+      } catch (error) {
+        showError(error.message + " If this keeps happening, check that the Flask server is running.");
+      } finally {
+        zone.classList.remove("busy"); btn.classList.remove("loading");
+        btn.textContent = idleText; restore();
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!input.files.length) return;
+      analyze(input.files[0], drop, button, "Analyze image", () => { button.disabled = !input.files.length; });
+    });
+
+    /* Tabs */
+    const tabUpload = $("tabUpload"), tabCamera = $("tabCamera");
+    function showTab(name) {
+      const cam = name === "camera";
+      tabUpload.setAttribute("aria-selected", String(!cam));
+      tabCamera.setAttribute("aria-selected", String(cam));
+      $("paneUpload").hidden = cam;
+      $("paneCamera").hidden = !cam;
+      resultBox.replaceChildren(); clearReport();
+      if (!cam) stopCamera();
+    }
+    tabUpload.addEventListener("click", () => showTab("upload"));
+    tabCamera.addEventListener("click", () => showTab("camera"));
+    [tabUpload, tabCamera].forEach(t => t.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { const next = t === tabUpload ? tabCamera : tabUpload; next.focus(); next.click(); }
+    }));
+
+    /* Live camera */
+    const video = $("camera"), canvas = $("canvas"), camBox = $("camBox");
+    const startBtn = $("startCamera"), capBtn = $("capture");
+    let stream = null;
+
+    function stopCamera() {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      stream = null; video.srcObject = null;
+      camBox.classList.remove("on"); capBtn.disabled = true; startBtn.textContent = "Start camera";
+    }
+
+    startBtn.addEventListener("click", async () => {
+      if (stream) { stopCamera(); return; }
+      resultBox.replaceChildren(); clearReport();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+        video.srcObject = stream;
+        camBox.classList.add("on"); capBtn.disabled = false; startBtn.textContent = "Stop camera";
+      } catch (error) {
+        stopCamera();
+        showError("Camera access was denied or is unavailable. Allow camera permission in your browser and try again. Cameras need https or localhost.");
+      }
+    });
+
+    capBtn.addEventListener("click", () => {
+      if (!stream || video.videoWidth === 0) { showError("Start the camera first."); return; }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) { showError("Could not capture a frame. Try again."); return; }
+        const file = new File([blob], "camera.jpg", { type: "image/jpeg" });
+        analyze(file, camBox, capBtn, "Capture and analyze", () => { capBtn.disabled = !stream; });
+      }, "image/jpeg", 0.92);
+    });
+
+    window.addEventListener("pagehide", stopCamera);
+
+    /* Interactive 3D Parallax Tilt on Cursor Movement */
+    (function setupMonumentTilt() {
+      const showcase = $("monumentShowcase");
+      const stage = $("monumentStage");
+      if (!showcase || !stage) return;
+
+      let ticking = false;
+      showcase.addEventListener("mousemove", (e) => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const rect = showcase.getBoundingClientRect();
+          const normX = ((e.clientX - rect.left) / rect.width) - 0.5;
+          const normY = ((e.clientY - rect.top) / rect.height) - 0.5;
+
+          const rotY = (normX * 22).toFixed(2);
+          const rotX = (-normY * 18).toFixed(2);
+          const transX = (normX * 12).toFixed(1);
+          const transY = (normY * 8).toFixed(1);
+
+          stage.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) translate3d(${transX}px, ${transY}px, 20px)`;
+          ticking = false;
+        });
+      });
+
+      showcase.addEventListener("mouseleave", () => {
+        stage.style.transform = "rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)";
+      });
+    })();
+
+    /* Ensure Monument Image Loads in Any Environment (Flask / file:// / Live Server) */
+    (function ensureMonumentLoads() {
+      const img = $("monumentImg");
+      if (!img) return;
+      const candidates = [
+        "../static/monument.webp",
+        "../static/monument.png",
+        "/static/monument.webp",
+        "/static/monument.png",
+        "static/monument.webp",
+        "static/monument.png",
+        "monument.webp",
+        "monument.png"
+      ];
+      let i = 0;
+      function tryNext() {
+        if (i >= candidates.length) return;
+        const candidate = candidates[i++];
+        const tester = new Image();
+        tester.onload = () => {
+          img.src = candidate;
+        };
+        tester.onerror = tryNext;
+        tester.src = candidate;
+      }
+      img.addEventListener("error", () => {
+        tryNext();
+      });
+      // Check if image failed to load after page initialization
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          if (!img.naturalWidth || img.naturalWidth === 0) {
+            tryNext();
+          }
+        }, 150);
+      });
+    })();
+  </script>
+</body>
+
+</html>
