@@ -960,6 +960,135 @@
       color: var(--charcoal);
     }
 
+    /* Clinical Capture Guidelines Card */
+    .clinical-guide-box {
+      margin-bottom: 22px;
+      padding: 14px 16px;
+      background: rgba(128, 0, 32, 0.04);
+      border: 1.2px solid rgba(128, 0, 32, 0.16);
+      border-radius: 12px;
+    }
+
+    .clinical-guide-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--burgundy);
+      margin-bottom: 10px;
+    }
+
+    .clinical-guide-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 650px) {
+      .clinical-guide-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .guide-col {
+      font-size: 0.81rem;
+      line-height: 1.45;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .guide-col.dont {
+      background: rgba(194, 59, 34, 0.06);
+      border: 1px solid rgba(194, 59, 34, 0.2);
+    }
+
+    .guide-col.do {
+      background: rgba(46, 204, 113, 0.06);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+    }
+
+    .guide-col p {
+      margin: 6px 0 0;
+      color: var(--charcoal);
+    }
+
+    .guide-badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .guide-badge.bad {
+      color: var(--coral);
+    }
+
+    .guide-badge.good {
+      color: #1E8449;
+    }
+
+    /* Inconclusive Result Card */
+    .inconclusive-card {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: rgba(229, 169, 59, 0.1);
+      border: 1.5px solid rgba(229, 169, 59, 0.45);
+      color: #7D510F;
+    }
+
+    .inconclusive-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: #B7791F;
+    }
+
+    .inconclusive-text {
+      margin: 0 0 10px;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: var(--charcoal);
+    }
+
+    .inconclusive-tips {
+      font-size: 0.83rem;
+      line-height: 1.45;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px 12px;
+      border-radius: 8px;
+      border-left: 3px solid #E5A93B;
+    }
+
+    .inconclusive-tips p {
+      margin: 4px 0 0;
+      color: var(--charcoal);
+    }
+
+    .cls-inconclusive {
+      color: #B7791F !important;
+    }
+
+    .roi-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .roi-toggle-row input {
+      accent-color: var(--burgundy);
+      cursor: pointer;
+    }
+
     .cam .off {
       position: absolute;
       inset: 0;
@@ -1204,6 +1333,26 @@
       </div>
 
       <section class="card" id="uploadCard" aria-label="Analyze an image">
+        <!-- Clinical Capture Guidelines Card -->
+        <div class="clinical-guide-box">
+          <div class="clinical-guide-header">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+            <span>Clinical Capture Guide — How to prevent false predictions</span>
+          </div>
+          <div class="clinical-guide-grid">
+            <div class="guide-col dont">
+              <span class="guide-badge bad">❌ Avoid Full Face / Teeth</span>
+              <p>Full face selfies, clenched teeth, lips, or clothing. The Swin model was trained strictly on intraoral mucosal tissue and will misclassify face skin as cancer.</p>
+            </div>
+            <div class="guide-col do">
+              <span class="guide-badge good">✔️ Direct Intraoral Close-up</span>
+              <p>Open mouth wide. Hold camera 10–15 cm close, shining direct light on the specific mucosal tissue (tongue, cheek, gums, or lesion).</p>
+            </div>
+          </div>
+        </div>
+
         <div class="tabs" role="tablist" aria-label="Image source">
           <button type="button" role="tab" id="tabUpload" aria-selected="true" aria-controls="paneUpload">Upload
             Photo</button>
@@ -1279,6 +1428,11 @@
 
           <!-- Quality & Lighting Feedback Card -->
           <div id="camQualityBox" class="cam-quality-box" hidden></div>
+
+          <label class="roi-toggle-row" title="When enabled, only the oral cavity inside the viewfinder reticle is analyzed, discarding clothes and face skin.">
+            <input type="checkbox" id="roiCropCheckbox" checked>
+            <span>Auto-crop to Oral Reticle (Removes face skin, neck, and clothing)</span>
+          </label>
 
           <!-- Live Camera Action Row -->
           <div class="camera-action-row" id="camActionsRow">
@@ -1460,13 +1614,14 @@
       row.append(el("span", "k", "Confidence"), el("span", "num", pct.toFixed(1) + "%"));
       const track = el("div", "track"), fill = el("div", "fill");
       track.append(fill);
-      const sub = el("p", "sub", pct < 60 ? "Low confidence. Treat this result with extra caution." : "How sure the model is about this class.");
-      if (pct < 60) sub.classList.add("warn");
 
       const actionRow = el("div", "result-report-action");
       const again = el("button", "link", "Analyze another image");
       again.type = "button";
-      again.addEventListener("click", () => setFile(null));
+      again.addEventListener("click", () => {
+        setFile(null);
+        resetReviewState();
+      });
 
       const downloadReportBtn = el("button", "link", "Export PDF Report ↓");
       downloadReportBtn.type = "button";
@@ -1474,14 +1629,43 @@
 
       actionRow.append(again, downloadReportBtn);
 
-      resultBox.replaceChildren(
-        el("p", "k", "Predicted class"),
-        el("h2", "cls", output.prediction),
-        row,
-        track,
-        sub,
-        actionRow
-      );
+      if (output.is_inconclusive) {
+        const warnBox = el("div", "inconclusive-card");
+        warnBox.innerHTML = `
+          <div class="inconclusive-header">
+            <svg class="quality-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <strong>Inconclusive / Out-of-Distribution Frame</strong>
+          </div>
+          <p class="inconclusive-text">${output.warning || "Logit margin is below the clinical reliability threshold. The image appears to contain non-intraoral features."}</p>
+          <div class="inconclusive-tips">
+            <strong>Clinical Guidance:</strong>
+            <p>${output.guidance || "Please open mouth wide, shine direct light, and capture mucosal tissue (tongue, cheek, gums) rather than full face or clothing."}</p>
+          </div>
+        `;
+
+        resultBox.replaceChildren(
+          el("p", "k", "Classification assessment"),
+          el("h2", "cls cls-inconclusive", "INCONCLUSIVE"),
+          row,
+          track,
+          warnBox,
+          actionRow
+        );
+      } else {
+        const sub = el("p", "sub", pct < 65 ? "Moderate confidence. Always verify with clinical examination." : "Model certainty for this intraoral tissue class.");
+        if (pct < 65) sub.classList.add("warn");
+
+        resultBox.replaceChildren(
+          el("p", "k", "Predicted class"),
+          el("h2", "cls", output.prediction),
+          row,
+          track,
+          sub,
+          actionRow
+        );
+      }
       requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = pct + "%"; }));
     }
 
@@ -1755,11 +1939,24 @@
       void camFlash.offsetWidth; // Trigger reflow
       camFlash.classList.add("flash-active");
 
-      // Draw high-resolution frame to canvas
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Draw high-resolution frame to canvas with optional ROI reticle cropping
+      const shouldCrop = $("roiCropCheckbox") ? $("roiCropCheckbox").checked : true;
+      const srcW = video.videoWidth;
+      const srcH = video.videoHeight;
+      let sx = 0, sy = 0, sw = srcW, sh = srcH;
+
+      if (shouldCrop) {
+        // Crop central 60% width, 54% height aligned with reticle to isolate mouth
+        sw = Math.round(srcW * 0.60);
+        sh = Math.round(srcH * 0.54);
+        sx = Math.round((srcW - sw) / 2);
+        sy = Math.round((srcH - sh) / 2);
+      }
+
+      canvas.width = sw;
+      canvas.height = sh;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
       // Freeze frame into review image
       const dataUrl = canvas.toDataURL("image/jpeg", 0.95);

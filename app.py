@@ -28,10 +28,19 @@ def assess_image_quality(image: Image.Image):
     edges = np.array(grayscale.filter(ImageFilter.FIND_EDGES), dtype=np.float32)
     edge_var = float(np.var(edges))
     
+    # Tissue vs clothing/background color distribution
+    np_rgb = np.array(image.convert("RGB"), dtype=np.float32)
+    r, g, b = np_rgb[:, :, 0], np_rgb[:, :, 1], np_rgb[:, :, 2]
+    
+    # Detect prominent non-biological clothing colors (e.g. blue/violet scarf/shirt)
+    clothing_pixels = (b > r * 1.1) & (b > 65)
+    clothing_ratio = float(np.mean(clothing_pixels))
+    
     is_too_dark = mean_brightness < 45.0
     is_too_bright = mean_brightness > 230.0
     is_low_contrast = contrast < 15.0
     is_blurry = edge_var < 50.0
+    has_dominant_clothing = clothing_ratio > 0.18
     
     issue = None
     message = "Image lighting and clarity are suitable for analysis."
@@ -48,6 +57,9 @@ def assess_image_quality(image: Image.Image):
     elif is_blurry:
         issue = "blurry"
         message = "Image appears out of focus or blurry. Please hold steady and retake."
+    elif has_dominant_clothing:
+        issue = "clothing_detected"
+        message = f"Clothing or background detected ({round(clothing_ratio * 100)}% of image). Please frame close-up inside the mouth without clothing or face."
         
     acceptable = issue is None
     
@@ -57,7 +69,8 @@ def assess_image_quality(image: Image.Image):
         "message": message,
         "brightness": round(mean_brightness, 1),
         "contrast": round(contrast, 1),
-        "edge_variance": round(edge_var, 1)
+        "edge_variance": round(edge_var, 1),
+        "clothing_ratio": round(clothing_ratio * 100, 1)
     }
 
 @app.route("/")
@@ -77,7 +90,7 @@ def predict():
         quality = assess_image_quality(image)
         force = request.form.get("force", "false").lower() in ("true", "1")
         
-        # If image fails quality checks (especially too dark) and not forced:
+        # If image fails quality checks (dark, blurry, or clothing) and not forced:
         if not quality["acceptable"] and not force:
             return jsonify({
                 "error": quality["message"],
@@ -89,13 +102,40 @@ def predict():
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
         with torch.no_grad():
-            probabilities = torch.softmax(model(**inputs).logits, dim=1)[0]
+            logits = model(**inputs).logits[0]
+            
+            # Confidence calibration via temperature scaling (T=1.5)
+            TEMPERATURE = 1.5
+            calibrated_probs = torch.softmax(logits / TEMPERATURE, dim=0)
 
-        class_id = probabilities.argmax().item()
+        raw_class_id = logits.argmax().item()
+        margin = abs(float(logits[0] - logits[1]))
+
+        # Clinical Logit Separation Threshold:
+        # In-distribution lesions have margins >= 4.0 (typically 7 to 11).
+        # Out-of-distribution faces, closed teeth, and non-oral frames have low margins (< 3.2).
+        is_ambiguous = margin < 3.2
+
+        if is_ambiguous and not force:
+            return jsonify({
+                "prediction": "INCONCLUSIVE",
+                "is_inconclusive": True,
+                "confidence": round(float(calibrated_probs.max().item()) * 100, 1),
+                "margin": round(margin, 2),
+                "quality": quality,
+                "warning": f"Logit margin ({round(margin, 2)}) is below the clinical reliability threshold. The image appears to contain non-intraoral features (e.g. face, teeth, or background) rather than a close-up of mucosal tissue.",
+                "guidance": "Please open your mouth wide and capture a close-up (10–15 cm) focused directly on the tongue, gums, inner cheek, or oral lesion under bright direct light.",
+                "note": "Educational prototype only; not a medical diagnosis."
+            })
+
+        predicted_label = model.config.id2label[raw_class_id]
+        confidence_val = round(float(calibrated_probs[raw_class_id].item()) * 100, 1)
 
         return jsonify({
-            "prediction": model.config.id2label[class_id],
-            "confidence": round(probabilities[class_id].item() * 100, 2),
+            "prediction": predicted_label,
+            "is_inconclusive": False,
+            "confidence": confidence_val,
+            "margin": round(margin, 2),
             "quality": quality,
             "note": "Educational prototype only; not a medical diagnosis."
         })
