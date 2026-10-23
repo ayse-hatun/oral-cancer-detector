@@ -746,6 +746,220 @@
       display: block;
     }
 
+    .cam img#camSnapshot {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      z-index: 2;
+    }
+
+    .cam-guide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+
+    .cam.on .cam-guide {
+      opacity: 1;
+    }
+
+    .cam-reticle {
+      width: 58%;
+      height: 52%;
+      border: 2px dashed rgba(255, 255, 240, 0.75);
+      border-radius: 50% / 40%;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.2);
+    }
+
+    .cam-guide-text {
+      margin-top: 12px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--ivory);
+      background: rgba(0, 0, 0, 0.65);
+      padding: 4px 14px;
+      border-radius: 20px;
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.3px;
+    }
+
+    .cam-lighting-chip {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(6px);
+      color: var(--ivory);
+      font-size: 0.78rem;
+      font-weight: 600;
+      pointer-events: none;
+      transition: background .25s ease;
+    }
+
+    .cam-lighting-chip .lighting-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #E5A93B;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    .cam-lighting-chip.good .lighting-dot {
+      background: #2ECC71;
+    }
+
+    .cam-lighting-chip.poor .lighting-dot {
+      background: #E74C3C;
+    }
+
+    .cam-flash {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .cam-flash.flash-active {
+      animation: flashAnim .35s ease-out;
+    }
+
+    @keyframes flashAnim {
+      0% { opacity: 0.85; }
+      100% { opacity: 0; }
+    }
+
+    .cam-quality-box {
+      margin-top: 16px;
+      border-radius: 12px;
+      animation: fadeIn .3s ease forwards;
+    }
+
+    .quality-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px 18px;
+      border-radius: 12px;
+    }
+
+    .quality-card.warning {
+      background: rgba(194, 59, 34, 0.08);
+      border: 1.5px solid rgba(194, 59, 34, 0.35);
+      color: #7A1910;
+    }
+
+    .quality-card.success {
+      background: rgba(46, 204, 113, 0.08);
+      border: 1.5px solid rgba(46, 204, 113, 0.35);
+      color: #145A32;
+    }
+
+    .quality-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.98rem;
+      font-weight: 700;
+    }
+
+    .quality-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .quality-card.warning .quality-icon {
+      color: var(--coral);
+    }
+
+    .quality-card.success .quality-icon {
+      color: #27AE60;
+    }
+
+    .quality-msg {
+      margin: 0;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .quality-tips {
+      margin: 4px 0 0;
+      padding-left: 20px;
+      font-size: 0.83rem;
+      line-height: 1.5;
+    }
+
+    .quality-metrics-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .metric-pill {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .camera-review-row {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .btn-retake-warn {
+      background: var(--coral) !important;
+      border-color: var(--coral) !important;
+      color: var(--ivory) !important;
+    }
+
+    .btn-retake-warn:hover {
+      background: #A02B15 !important;
+      box-shadow: 0 4px 12px rgba(194, 59, 34, .3) !important;
+    }
+
+    .force-btn-row {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .link-force {
+      background: none;
+      border: none;
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .link-force:hover {
+      color: var(--charcoal);
+    }
+
     .cam .off {
       position: absolute;
       inset: 0;
@@ -756,6 +970,7 @@
       color: var(--ivory);
       opacity: .88;
       font-size: .96rem;
+      z-index: 1;
     }
 
     .cam.on .off {
@@ -771,6 +986,7 @@
       width: 40%;
       background: var(--ivory);
       animation: slide 1.1s ease-in-out infinite;
+      z-index: 5;
     }
 
     @media (max-width: 900px) {
@@ -1041,16 +1257,78 @@
         <div id="paneCamera" role="tabpanel" aria-labelledby="tabCamera" hidden>
           <div class="cam" id="camBox">
             <video id="camera" autoplay playsinline muted aria-label="Live camera preview"></video>
-            <div class="off">Camera is off. Select Start camera and allow access when asked.</div>
+            <img id="camSnapshot" alt="Captured oral photograph preview" hidden>
+
+            <!-- Viewfinder Guide Overlay -->
+            <div class="cam-guide" id="camGuide" aria-hidden="true">
+              <div class="cam-reticle"></div>
+              <span class="cam-guide-text">Position oral lesion / cavity inside guide</span>
+            </div>
+
+            <!-- Live Lighting Chip -->
+            <div class="cam-lighting-chip" id="camLightingChip" hidden>
+              <span class="lighting-dot"></span>
+              <span id="camLightingLabel">Checking lighting…</span>
+            </div>
+
+            <!-- Shutter Flash Animation -->
+            <div class="cam-flash" id="camFlash"></div>
+
+            <div class="off">Camera is off. Select <strong>Start camera</strong> and allow access when asked.</div>
           </div>
-          <div class="camera-action-row">
-            <button type="button" class="go ghost" id="startCamera">Start camera</button>
-            <button type="button" class="go" id="capture" disabled>Capture &amp; analyze</button>
+
+          <!-- Quality & Lighting Feedback Card -->
+          <div id="camQualityBox" class="cam-quality-box" hidden></div>
+
+          <!-- Live Camera Action Row -->
+          <div class="camera-action-row" id="camActionsRow">
+            <button type="button" class="go ghost" id="startCamera">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" />
+              </svg>
+              <span id="startCameraText">Start camera</span>
+            </button>
+            <button type="button" class="go" id="takePhotoBtn" disabled>
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="10" cy="10" r="4" fill="currentColor"/>
+              </svg>
+              <span>Take picture</span>
+            </button>
             <button type="button" class="go ghost btn-report" id="camPdfReportBtn" disabled
               title="Analyze an image first to build a PDF report">
-              <span>PDF Report Builder</span>
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span>PDF Report</span>
             </button>
           </div>
+
+          <!-- Review & Analyze Action Row (Shown after picture is taken) -->
+          <div class="camera-review-row" id="camReviewActionsRow" hidden>
+            <button type="button" class="go" id="analyzeCapturedBtn">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span id="analyzeCapturedText">Analyze picture</span>
+            </button>
+            <button type="button" class="go ghost" id="retakeBtn">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                  clip-rule="evenodd" />
+              </svg>
+              <span id="retakeBtnText">Retake photo</span>
+            </button>
+          </div>
+          <div class="force-btn-row" id="forceAnalyzeRow" hidden>
+            <button type="button" class="link-force" id="forceAnalyzeBtn">Proceed with analysis anyway (low accuracy risk)</button>
+          </div>
+
           <canvas id="canvas" hidden></canvas>
         </div>
 
@@ -1207,16 +1485,108 @@
       requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = pct + "%"; }));
     }
 
-    async function analyze(file, zone, btn, idleText, restore) {
+    /* Image Quality Assessment: Lighting (Brightness), Contrast, Sharpness (Laplacian Edge Variance) */
+    function assessImageQuality(sourceCanvas) {
+      const sw = Math.min(sourceCanvas.width, 360);
+      const sh = Math.round(sourceCanvas.height * (sw / sourceCanvas.width));
+      const sample = document.createElement("canvas");
+      sample.width = sw; sample.height = sh;
+      const sctx = sample.getContext("2d");
+      sctx.drawImage(sourceCanvas, 0, 0, sw, sh);
+
+      const imgData = sctx.getImageData(0, 0, sw, sh);
+      const d = imgData.data;
+      const totalPixels = sw * sh;
+      let sumLum = 0;
+      const gray = new Float32Array(totalPixels);
+
+      for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+        // Standard Rec. 601 luma formula
+        const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        gray[j] = lum;
+        sumLum += lum;
+      }
+
+      const meanBrightness = sumLum / totalPixels;
+
+      let varianceSum = 0;
+      for (let j = 0; j < totalPixels; j++) {
+        const diff = gray[j] - meanBrightness;
+        varianceSum += diff * diff;
+      }
+      const stdDev = Math.sqrt(varianceSum / totalPixels);
+
+      // Sharpness via discrete Laplacian approximation
+      let lapSum = 0, lapSqSum = 0, count = 0;
+      for (let y = 1; y < sh - 1; y++) {
+        const row = y * sw;
+        for (let x = 1; x < sw - 1; x++) {
+          const idx = row + x;
+          const lap = gray[idx - sw] + gray[idx - 1] + gray[idx + 1] + gray[idx + sw] - 4 * gray[idx];
+          lapSum += lap;
+          lapSqSum += lap * lap;
+          count++;
+        }
+      }
+      const lapMean = lapSum / count;
+      const sharpness = (lapSqSum / count) - (lapMean * lapMean);
+
+      let status = "good";
+      let title = "Optimal Lighting & Clarity";
+      let reason = "Image illumination and focus meet clinical requirements.";
+      let tip = "";
+
+      if (meanBrightness < 55) {
+        status = "too_dark";
+        title = "Poor Lighting Detected (Too Dark)";
+        reason = "The captured photo is too dark (brightness: " + Math.round(meanBrightness) + "/255). The Swin Transformer model needs bright, clear illumination of the oral cavity. Low light causes false diagnosis.";
+        tip = "Please turn on room lights or shine a smartphone flashlight directly onto the oral area and retake.";
+      } else if (meanBrightness > 225) {
+        status = "overexposed";
+        title = "Excessive Glare / Overexposed";
+        reason = "The captured photo has intense reflection or is washed out (brightness: " + Math.round(meanBrightness) + "/255). Glare obscures fine tissue margins.";
+        tip = "Please adjust the camera angle to avoid direct flash reflection and retake.";
+      } else if (stdDev < 16) {
+        status = "low_contrast";
+        title = "Low Contrast Detected";
+        reason = "The photo lacks contrast and tissue detail.";
+        tip = "Please ensure direct, balanced lighting on the oral cavity and retake.";
+      } else if (sharpness < 28) {
+        status = "blurry";
+        title = "Blurry / Out of Focus";
+        reason = "The photo appears blurry or motion-distorted.";
+        tip = "Please hold the camera steady 10–15 cm away and wait for clear focus before snapping.";
+      }
+
+      return {
+        isGood: status === "good",
+        status: status,
+        title: title,
+        reason: reason,
+        tip: tip,
+        brightness: Math.round(meanBrightness),
+        contrast: Math.round(stdDev),
+        sharpness: Math.round(sharpness)
+      };
+    }
+
+    async function analyze(file, zone, btn, idleText, restore, isForced = false) {
       btn.disabled = true; btn.classList.add("loading"); btn.textContent = "Analyzing…";
       zone.classList.add("busy"); resultBox.replaceChildren(); clearReport();
       try {
         const data = new FormData();
         data.append("image", file, file.name || "camera.jpg");
+        if (isForced) data.append("force", "1");
         const response = await fetch("/predict", { method: "POST", body: data });
         let result = {};
         try { result = await response.json(); } catch (_) { }
-        if (!response.ok) throw new Error(result.error || "Prediction failed.");
+        
+        if (!response.ok) {
+          if (result.quality_error) {
+            throw new Error(result.error);
+          }
+          throw new Error(result.error || "Prediction failed.");
+        }
 
         if (!result.error) {
           document.getElementById("reportPrediction").value = result.prediction;
@@ -1257,40 +1627,247 @@
       if (e.key === "ArrowRight" || e.key === "ArrowLeft") { const next = t === tabUpload ? tabCamera : tabUpload; next.focus(); next.click(); }
     }));
 
-    /* Live camera */
-    const video = $("camera"), canvas = $("canvas"), camBox = $("camBox");
-    const startBtn = $("startCamera"), capBtn = $("capture");
+    /* Two-Step Live Camera System with Lighting Assessment & Review */
+    const video = $("camera"), snapshotImg = $("camSnapshot"), canvas = $("canvas"), camBox = $("camBox");
+    const camGuide = $("camGuide"), lightingChip = $("camLightingChip"), lightingLabel = $("camLightingLabel");
+    const camFlash = $("camFlash"), camQualityBox = $("camQualityBox");
+    const camActionsRow = $("camActionsRow"), camReviewActionsRow = $("camReviewActionsRow");
+    const startBtn = $("startCamera"), startText = $("startCameraText"), takePhotoBtn = $("takePhotoBtn");
+    const analyzeCapturedBtn = $("analyzeCapturedBtn"), analyzeCapturedText = $("analyzeCapturedText");
+    const retakeBtn = $("retakeBtn"), retakeBtnText = $("retakeBtnText");
+    const forceAnalyzeRow = $("forceAnalyzeRow"), forceAnalyzeBtn = $("forceAnalyzeBtn");
+
     let stream = null;
+    let lightingMonitorInterval = null;
+    let currentCapturedFile = null;
+    let lastQualityAssessment = null;
+
+    function startLiveLightingMonitor() {
+      if (lightingMonitorInterval) clearInterval(lightingMonitorInterval);
+      lightingChip.hidden = false;
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = 48; offCanvas.height = 36;
+      const offCtx = offCanvas.getContext("2d");
+
+      lightingMonitorInterval = setInterval(() => {
+        if (!stream || video.videoWidth === 0 || video.paused) return;
+        try {
+          offCtx.drawImage(video, 0, 0, 48, 36);
+          const data = offCtx.getImageData(0, 0, 48, 36).data;
+          let sum = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          }
+          const mean = sum / (48 * 36);
+          lightingChip.classList.remove("good", "poor");
+          if (mean < 55) {
+            lightingChip.classList.add("poor");
+            lightingLabel.textContent = "⚠️ Lighting: Low — add light";
+          } else if (mean > 225) {
+            lightingChip.classList.add("poor");
+            lightingLabel.textContent = "⚠️ Lighting: Glare / washed out";
+          } else {
+            lightingChip.classList.add("good");
+            lightingLabel.textContent = "✨ Lighting: Good";
+          }
+        } catch (_) { }
+      }, 450);
+    }
+
+    function stopLiveLightingMonitor() {
+      if (lightingMonitorInterval) {
+        clearInterval(lightingMonitorInterval);
+        lightingMonitorInterval = null;
+      }
+      lightingChip.hidden = true;
+    }
 
     function stopCamera() {
+      stopLiveLightingMonitor();
       if (stream) stream.getTracks().forEach(t => t.stop());
       stream = null; video.srcObject = null;
-      camBox.classList.remove("on"); capBtn.disabled = true; startBtn.textContent = "Start camera";
+      camBox.classList.remove("on");
+      takePhotoBtn.disabled = true;
+      startText.textContent = "Start camera";
+      resetReviewState();
+    }
+
+    function resetReviewState() {
+      snapshotImg.hidden = true;
+      snapshotImg.src = "";
+      video.hidden = false;
+      if (stream) {
+        camGuide.hidden = false;
+        video.play().catch(() => {});
+        startLiveLightingMonitor();
+      } else {
+        camGuide.hidden = true;
+      }
+      camQualityBox.hidden = true;
+      camQualityBox.replaceChildren();
+      forceAnalyzeRow.hidden = true;
+      camActionsRow.hidden = false;
+      camReviewActionsRow.hidden = true;
+      currentCapturedFile = null;
+      lastQualityAssessment = null;
+      retakeBtn.classList.remove("btn-retake-warn");
+      retakeBtnText.textContent = "Retake photo";
+      analyzeCapturedBtn.disabled = false;
+      analyzeCapturedBtn.removeAttribute("title");
     }
 
     startBtn.addEventListener("click", async () => {
       if (stream) { stopCamera(); return; }
       resultBox.replaceChildren(); clearReport();
+      resetReviewState();
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            facingMode: { ideal: "environment" }
+          },
+          audio: false
+        });
         video.srcObject = stream;
-        camBox.classList.add("on"); capBtn.disabled = false; startBtn.textContent = "Stop camera";
+        camBox.classList.add("on");
+        takePhotoBtn.disabled = false;
+        startText.textContent = "Stop camera";
+        video.onloadedmetadata = () => {
+          video.play().catch(() => {});
+          startLiveLightingMonitor();
+        };
       } catch (error) {
         stopCamera();
-        showError("Camera access was denied or is unavailable. Allow camera permission in your browser and try again. Cameras need https or localhost.");
+        showError("Camera access was denied or is unavailable. Please allow camera permissions in your browser and ensure you are using localhost or HTTPS.");
       }
     });
 
-    capBtn.addEventListener("click", () => {
-      if (!stream || video.videoWidth === 0) { showError("Start the camera first."); return; }
+    // 1. Take Photo Step: Capture still, review lighting & quality
+    takePhotoBtn.addEventListener("click", () => {
+      if (!stream || video.videoWidth === 0) {
+        showError("Please start the camera first.");
+        return;
+      }
+
+      // Shutter flash animation
+      camFlash.classList.remove("flash-active");
+      void camFlash.offsetWidth; // Trigger reflow
+      camFlash.classList.add("flash-active");
+
+      // Draw high-resolution frame to canvas
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Freeze frame into review image
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+      snapshotImg.src = dataUrl;
+      snapshotImg.hidden = false;
+      video.hidden = true;
+      camGuide.hidden = true;
+      stopLiveLightingMonitor();
+      video.pause();
+
+      // Convert to file
       canvas.toBlob((blob) => {
-        if (!blob) { showError("Could not capture a frame. Try again."); return; }
-        const file = new File([blob], "camera.jpg", { type: "image/jpeg" });
-        analyze(file, camBox, capBtn, "Capture and analyze", () => { capBtn.disabled = !stream; });
-      }, "image/jpeg", 0.92);
+        if (!blob) {
+          showError("Could not capture frame from camera. Please try again.");
+          resetReviewState();
+          return;
+        }
+        currentCapturedFile = new File([blob], "oral_photo.jpg", { type: "image/jpeg" });
+      }, "image/jpeg", 0.95);
+
+      // Run automatic lighting & clarity evaluation
+      const quality = assessImageQuality(canvas);
+      lastQualityAssessment = quality;
+
+      // Render Quality Card
+      renderQualityCard(quality);
+
+      // Toggle to Review buttons
+      camActionsRow.hidden = true;
+      camReviewActionsRow.hidden = false;
+    });
+
+    function renderQualityCard(q) {
+      camQualityBox.hidden = false;
+      camQualityBox.replaceChildren();
+
+      const card = el("div", "quality-card " + (q.isGood ? "success" : "warning"));
+      const header = el("div", "quality-header");
+      
+      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      icon.setAttribute("class", "quality-icon");
+      icon.setAttribute("viewBox", "0 0 20 20");
+      icon.setAttribute("fill", "currentColor");
+      
+      if (q.isGood) {
+        icon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>';
+      } else {
+        icon.innerHTML = '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>';
+      }
+
+      header.append(icon, el("strong", null, q.title));
+      const msg = el("p", "quality-msg", q.reason);
+
+      card.append(header, msg);
+
+      if (q.tip) {
+        const tipsList = el("ul", "quality-tips");
+        tipsList.append(el("li", null, q.tip));
+        card.append(tipsList);
+      }
+
+      const metricsRow = el("div", "quality-metrics-row");
+      metricsRow.append(
+        el("span", "metric-pill", "💡 Lighting: " + (q.brightness < 55 ? "Too Dark" : q.brightness > 225 ? "Glare" : "Good") + " (" + q.brightness + "/255)"),
+        el("span", "metric-pill", "🔍 Focus: " + (q.sharpness < 28 ? "Blurry" : "Sharp"))
+      );
+      card.append(metricsRow);
+
+      camQualityBox.append(card);
+
+      if (!q.isGood) {
+        // Highlight retake action
+        retakeBtn.classList.add("btn-retake-warn");
+        retakeBtnText.textContent = "🔄 Retake in Good Lighting";
+        analyzeCapturedBtn.disabled = true;
+        analyzeCapturedBtn.setAttribute("title", "Image quality is poor. Please retake under good lighting for an accurate result.");
+        forceAnalyzeRow.hidden = false;
+      } else {
+        retakeBtn.classList.remove("btn-retake-warn");
+        retakeBtnText.textContent = "Retake photo";
+        analyzeCapturedBtn.disabled = false;
+        analyzeCapturedBtn.removeAttribute("title");
+        forceAnalyzeRow.hidden = true;
+      }
+    }
+
+    // 2. Retake Button: Discards snapshot and reactivates live camera
+    retakeBtn.addEventListener("click", () => {
+      resetReviewState();
+    });
+
+    // 3. Analyze Picture Button: Evaluates the approved captured picture
+    analyzeCapturedBtn.addEventListener("click", () => {
+      if (!currentCapturedFile) {
+        showError("No photo captured. Please take a picture first.");
+        return;
+      }
+      analyze(currentCapturedFile, camBox, analyzeCapturedBtn, "Analyze picture", () => {
+        analyzeCapturedBtn.disabled = false;
+      }, false);
+    });
+
+    // Force analysis button if user insists
+    forceAnalyzeBtn.addEventListener("click", () => {
+      if (!currentCapturedFile) return;
+      analyze(currentCapturedFile, camBox, analyzeCapturedBtn, "Analyze picture", () => {
+        analyzeCapturedBtn.disabled = false;
+      }, true);
     });
 
     window.addEventListener("pagehide", stopCamera);
