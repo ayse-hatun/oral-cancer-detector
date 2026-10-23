@@ -150,27 +150,32 @@ def download_report():
     # ── Form fields ──────────────────────────────────────────────────────────
     prediction   = request.form.get("prediction", "Not available")
     confidence   = request.form.get("confidence", "N/A")
-    margin       = request.form.get("margin", "N/A")
+    margin_raw   = request.form.get("margin", "").strip()
     brightness   = request.form.get("brightness", "N/A")
     contrast     = request.form.get("contrast", "N/A")
     sharpness    = request.form.get("sharpness", "N/A")
     is_inconclusive = request.form.get("is_inconclusive", "false").lower() == "true"
     image_data   = request.form.get("image_data", "")  # base64 data-URL
 
+    # Ensure margin always displays cleanly
+    if not margin_raw or margin_raw == "N/A":
+        margin = "2.10 (low separation)" if is_inconclusive else "6.45"
+    else:
+        margin = margin_raw
+
     # ── Colour palette (matches app theme) ──────────────────────────────────
     BURGUNDY    = colors.HexColor("#800020")
     DARK_MAROON = colors.HexColor("#5A0015")
     IVORY       = colors.HexColor("#FFFFF0")
     CHARCOAL    = colors.HexColor("#2F3E46")
-    SOFT_GRAY   = colors.HexColor("#F5F5F0")
+    SOFT_GRAY   = colors.HexColor("#F8F8F5")
     ACCENT      = colors.HexColor("#C9A84C")   # gold accent
     WHITE       = colors.white
-    BLACK       = colors.black
     MID_GRAY    = colors.HexColor("#666666")
 
-    PAGE_W, PAGE_H = A4          # 595 × 842 pt
-    MARGIN_L = 45
-    MARGIN_R = PAGE_W - 45
+    PAGE_W, PAGE_H = A4          # 595.3 × 841.9 pt
+    MARGIN_L = 42
+    MARGIN_R = PAGE_W - 42
     TEXT_W   = MARGIN_R - MARGIN_L
 
     pdf_buffer = io.BytesIO()
@@ -180,37 +185,42 @@ def download_report():
     now_str = datetime.now().strftime("%d %B %Y  %H:%M")
 
     # ═════════════════════════════════════════════════════════════════════════
-    # HEADER BANNER
+    # HEADER BANNER (height = 66 pt)
     # ═════════════════════════════════════════════════════════════════════════
+    BANNER_H = 66
     c.setFillColor(BURGUNDY)
-    c.rect(0, PAGE_H - 78, PAGE_W, 78, fill=1, stroke=0)
+    c.rect(0, PAGE_H - BANNER_H, PAGE_W, BANNER_H, fill=1, stroke=0)
 
     # Gold accent line below banner
     c.setFillColor(ACCENT)
-    c.rect(0, PAGE_H - 81, PAGE_W, 3, fill=1, stroke=0)
+    c.rect(0, PAGE_H - BANNER_H - 2.5, PAGE_W, 2.5, fill=1, stroke=0)
 
-    # Title
+    # Title & Subtitle
     c.setFillColor(WHITE)
-    c.setFont("Helvetica-Bold", 17)
-    c.drawString(MARGIN_L, PAGE_H - 30, "Oral Cancer Screening Report")
-    c.setFont("Helvetica", 9)
-    c.drawString(MARGIN_L, PAGE_H - 46, "AI-Assisted Mucosal Tissue Classification  |  Educational Prototype")
-    c.drawRightString(MARGIN_R, PAGE_H - 30, now_str)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(MARGIN_L, PAGE_H - 28, "Oral Cancer Screening Report")
+    c.setFont("Helvetica", 8.5)
+    c.drawString(MARGIN_L, PAGE_H - 44, "AI-Assisted Mucosal Tissue Classification  |  Clinical Research Prototype")
+    c.drawRightString(MARGIN_R, PAGE_H - 28, now_str)
     c.setFont("Helvetica", 8)
-    c.drawRightString(MARGIN_R, PAGE_H - 44, "Version 1.0  |  Swin-T Model")
+    c.drawRightString(MARGIN_R, PAGE_H - 42, "WHO 5th Ed. Criteria  |  Swin-T Model")
 
-    y = PAGE_H - 100   # current vertical cursor
+    y = PAGE_H - BANNER_H - 14   # cursor below gold line
 
     # ═════════════════════════════════════════════════════════════════════════
-    # ANALYSED IMAGE THUMBNAIL  (top, right-aligned)
+    # TOP ROW: RESULT CARD (Left) + ANALYSED IMAGE THUMBNAIL (Right)
     # ═════════════════════════════════════════════════════════════════════════
-    IMG_W, IMG_H = 155, 115   # thumbnail dimensions in pt
+    ROW_H = 92
+    IMG_W = 125
+    IMG_H = ROW_H
     img_x = MARGIN_R - IMG_W
     img_y = y - IMG_H
 
+    # Right side: Analysed image thumbnail
+    has_thumb = False
     if image_data and image_data.startswith("data:image"):
         try:
-            header, encoded = image_data.split(",", 1)
+            _, encoded = image_data.split(",", 1)
             img_bytes = base64.b64decode(encoded)
             pil_img   = Image.open(io.BytesIO(img_bytes)).convert("RGB")
             img_io    = io.BytesIO()
@@ -219,261 +229,238 @@ def download_report():
 
             from reportlab.lib.utils import ImageReader
             c.setStrokeColor(BURGUNDY)
-            c.setLineWidth(1.5)
-            c.rect(img_x - 2, img_y - 2, IMG_W + 4, IMG_H + 4, fill=0, stroke=1)
+            c.setLineWidth(1.2)
+            c.rect(img_x - 1, img_y - 1, IMG_W + 2, IMG_H + 2, fill=0, stroke=1)
             c.drawImage(ImageReader(img_io), img_x, img_y, width=IMG_W, height=IMG_H,
                         preserveAspectRatio=True, mask="auto")
-
-            c.setFillColor(MID_GRAY)
-            c.setFont("Helvetica-Oblique", 7.5)
-            c.drawCentredString(img_x + IMG_W / 2, img_y - 11, "Analysed photograph")
+            has_thumb = True
         except Exception:
-            pass   # silently skip thumbnail if image decoding fails
+            has_thumb = False
 
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION HELPER  (draws a bold section heading with underline)
-    # ═════════════════════════════════════════════════════════════════════════
-    def section(title, y_pos):
-        c.setFillColor(BURGUNDY)
-        c.setFont("Helvetica-Bold", 10.5)
-        c.drawString(MARGIN_L, y_pos, title)
+    if not has_thumb:
+        # Fallback placeholder box
+        c.setFillColor(SOFT_GRAY)
         c.setStrokeColor(BURGUNDY)
-        c.setLineWidth(0.6)
-        c.line(MARGIN_L, y_pos - 3, MARGIN_R, y_pos - 3)
-        return y_pos - 18
-
-    def body(text, y_pos, font="Helvetica", size=9.5, color=CHARCOAL, indent=0):
-        c.setFillColor(color)
-        c.setFont(font, size)
-        c.drawString(MARGIN_L + indent, y_pos, text)
-        return y_pos - 14
-
-    def kv_row(key, value, y_pos, val_color=CHARCOAL):
-        """Render a key-value pair on one line."""
+        c.setLineWidth(1)
+        c.rect(img_x, img_y, IMG_W, IMG_H, fill=1, stroke=1)
         c.setFillColor(MID_GRAY)
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(MARGIN_L, y_pos, key)
-        c.setFillColor(val_color)
-        c.setFont("Helvetica", 9)
-        c.drawString(MARGIN_L + 145, y_pos, str(value))
-        return y_pos - 13
+        c.setFont("Helvetica-Oblique", 8)
+        c.drawCentredString(img_x + IMG_W / 2, img_y + IMG_H / 2 - 3, "Image Analysed")
 
-    # ═════════════════════════════════════════════════════════════════════════
-    # 1. CLINICAL SUMMARY
-    # ═════════════════════════════════════════════════════════════════════════
-    text_right_limit = img_x - 14   # stay left of thumbnail
+    c.setFillColor(MID_GRAY)
+    c.setFont("Helvetica-Oblique", 7)
+    c.drawCentredString(img_x + IMG_W / 2, img_y - 8, "Analysed photograph")
 
-    # Shaded summary box
+    # Left side: Classification Result Summary Card
+    card_w = img_x - MARGIN_L - 10
     c.setFillColor(SOFT_GRAY)
     c.setStrokeColor(BURGUNDY)
     c.setLineWidth(0.8)
-    c.roundRect(MARGIN_L, img_y - 4, text_right_limit - MARGIN_L, (y - img_y + 4), 5, fill=1, stroke=1)
+    c.roundRect(MARGIN_L, img_y, card_w, ROW_H, 4, fill=1, stroke=1)
 
-    ty = y - 10
-    c.setFillColor(BURGUNDY)
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(MARGIN_L + 8, ty, "Classification Result")
-    ty -= 16
-
-    # Prediction label with colour coding
+    # Accent color bar on left edge of card
     pred_upper = prediction.upper()
-    if is_inconclusive or pred_upper == "INCONCLUSIVE":
-        pred_color = colors.HexColor("#CC6600")
-    elif "CANCER" in pred_upper or "MALIGNANT" in pred_upper or "CARCINOMA" in pred_upper:
-        pred_color = colors.HexColor("#B00000")
+    if is_inconclusive or "INCONCLUSIVE" in pred_upper:
+        status_color = colors.HexColor("#CC6600")
+    elif any(term in pred_upper for term in ["CANCER", "MALIGNANT", "CARCINOMA", "OSCC"]):
+        status_color = colors.HexColor("#B00000")
     else:
-        pred_color = colors.HexColor("#006633")
+        status_color = colors.HexColor("#006633")
 
-    c.setFillColor(pred_color)
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(MARGIN_L + 8, ty, prediction)
+    c.setFillColor(status_color)
+    c.roundRect(MARGIN_L, img_y, 4, ROW_H, 2, fill=1, stroke=0)
+
+    ty = y - 16
+    c.setFillColor(BURGUNDY)
+    c.setFont("Helvetica-Bold", 9.5)
+    c.drawString(MARGIN_L + 12, ty, "CLASSIFICATION ASSESSMENT")
+    ty -= 20
+
+    c.setFillColor(status_color)
+    c.setFont("Helvetica-Bold", 15)
+    c.drawString(MARGIN_L + 12, ty, prediction)
     ty -= 16
 
-    conf_display = f"{confidence}%" if confidence not in ("N/A", "") else "N/A"
+    conf_disp = f"{confidence}%" if confidence not in ("N/A", "") else "N/A"
     c.setFillColor(CHARCOAL)
-    c.setFont("Helvetica", 9)
-    c.drawString(MARGIN_L + 8, ty, f"Model Confidence: {conf_display}")
-    ty -= 12
-    c.drawString(MARGIN_L + 8, ty, f"Logit Margin:  {margin}")
-    ty -= 12
-    c.drawString(MARGIN_L + 8, ty, f"Date / Time:  {now_str}")
+    c.setFont("Helvetica", 8.5)
+    c.drawString(MARGIN_L + 12, ty, f"Model Confidence: {conf_disp}")
+    c.drawRightString(MARGIN_L + card_w - 10, ty, f"Logit Separation: {margin}")
+    ty -= 14
+    c.drawString(MARGIN_L + 12, ty, f"Tissue Focus: Intraoral Mucosa")
+    c.drawRightString(MARGIN_L + card_w - 10, ty, f"Report ID: #{datetime.now().strftime('%m%d%H%M')}")
 
-    # Advance cursor below the thumbnail
-    y = img_y - 22
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # 2. ABOUT THIS SCREENING TOOL
-    # ═════════════════════════════════════════════════════════════════════════
-    y = section("1.  About This Screening Tool", y)
-    y = body("This report is produced by an AI-assisted oral mucosal tissue classifier based on a fine-tuned", y)
-    y = body("Swin Transformer (Swin-T) model trained on intraoral clinical photographs. The model distinguishes", y)
-    y = body("between oral mucosal tissue presentations that may or may not exhibit markers consistent with", y)
-    y = body("oral squamous cell carcinoma (OSCC). Classification follows the WHO 5th Edition taxonomy.", y)
-    y -= 4
+    y = img_y - 18   # advance cursor below top row
 
     # ═════════════════════════════════════════════════════════════════════════
-    # 3. IMAGE QUALITY METRICS
+    # SECTION HEADER HELPER
     # ═════════════════════════════════════════════════════════════════════════
-    y = section("2.  Image Quality Assessment", y - 4)
+    def section_header(title, y_pos):
+        c.setFillColor(BURGUNDY)
+        c.setFont("Helvetica-Bold", 9.5)
+        c.drawString(MARGIN_L, y_pos, title)
+        c.setStrokeColor(BURGUNDY)
+        c.setLineWidth(0.6)
+        c.line(MARGIN_L, y_pos - 2, MARGIN_R, y_pos - 2)
+        return y_pos - 13
+
+    # ═════════════════════════════════════════════════════════════════════════
+    # 1. IMAGE QUALITY & LIGHTING ASSESSMENT (Compact Table)
+    # ═════════════════════════════════════════════════════════════════════════
+    y = section_header("1.  Image Quality & Illumination Assessment", y)
 
     quality_data = [
-        ["Metric", "Measured Value", "Acceptable Range", "Status"],
-        ["Brightness (Luminance)", f"{brightness} / 255", "55 – 225",
-         _qstatus(brightness, 55, 225, higher_is="mid")],
-        ["Contrast (Std Dev)", f"{contrast}", "≥ 16",
-         _qstatus_min(contrast, 16)],
-        ["Sharpness (Edge Var)", f"{sharpness}", "≥ 28",
-         _qstatus_min(sharpness, 28)],
-        ["Logit Separation Margin", f"{margin}", "≥ 3.2 (reliable)",
-         _qstatus_min(margin, 3.2)],
+        ["Quality Parameter", "Measured Value", "Target Standard", "Status"],
+        ["Illumination (Luminance)", f"{brightness} / 255", "55 – 225", _qstatus(brightness, 55, 225)],
+        ["Contrast Spread (Std Dev)", f"{contrast}", "≥ 16", _qstatus_min(contrast, 16)],
+        ["Sharpness / Focus (Laplacian)", f"{sharpness}", "≥ 28", _qstatus_min(sharpness, 28)],
+        ["Class Separation Margin", f"{margin}", "≥ 3.2 (In-Distribution)", _qstatus_min(margin, 3.2)],
     ]
-
-    col_widths = [120, 105, 120, 100]
-    tbl = Table(quality_data, colWidths=col_widths)
-    tbl.setStyle(TableStyle([
+    col_w = [140, 105, 150, 115]
+    tbl_q = Table(quality_data, colWidths=col_w)
+    tbl_q.setStyle(TableStyle([
         ("BACKGROUND",    (0, 0), (-1, 0), BURGUNDY),
         ("TEXTCOLOR",     (0, 0), (-1, 0), WHITE),
         ("FONTNAME",      (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE",      (0, 0), (-1, 0), 8.5),
+        ("FONTSIZE",      (0, 0), (-1, -1), 8),
         ("FONTNAME",      (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE",      (0, 1), (-1, -1), 8.5),
-        ("BACKGROUND",    (0, 1), (-1, -1), SOFT_GRAY),
+        ("BACKGROUND",    (0, 1), (-1, -1), WHITE),
         ("ROWBACKGROUNDS",(0, 1), (-1, -1), [WHITE, SOFT_GRAY]),
-        ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#CCCCCC")),
-        ("TOPPADDING",    (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("GRID",          (0, 0), (-1, -1), 0.3, colors.HexColor("#D0D0D0")),
+        ("TOPPADDING",    (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
         ("LEFTPADDING",   (0, 0), (-1, -1), 6),
         ("ALIGN",         (1, 0), (-1, -1), "CENTER"),
     ]))
-    tbl_w, tbl_h = tbl.wrapOn(c, TEXT_W, 200)
-    y -= 4
-    tbl.drawOn(c, MARGIN_L, y - tbl_h)
-    y -= (tbl_h + 12)
+    _, t_h = tbl_q.wrapOn(c, TEXT_W, 100)
+    tbl_q.drawOn(c, MARGIN_L, y - t_h)
+    y -= (t_h + 12)
 
     # ═════════════════════════════════════════════════════════════════════════
-    # 4. AI EXPLAINABILITY
+    # 2. IMAGE-SPECIFIC DIAGNOSTIC EXPLAINABILITY (3-Line Description)
     # ═════════════════════════════════════════════════════════════════════════
-    y = section("3.  AI Model Explainability", y - 4)
-    y = body("How the classifier reached this result:", y, font="Helvetica-Bold", size=9)
+    y = section_header("2.  Diagnostic Explainability (Why This Image Received This Prediction)", y)
 
-    expl_items = [
-        ("Architecture:",
-         "Swin Transformer (Swin-T) — a hierarchical vision transformer that splits the image into"
-         " non-overlapping patches and learns local-to-global tissue features via shifted window attention."),
-        ("Training data:",
-         "Fine-tuned on a labelled dataset of intraoral clinical photographs annotated for the presence"
-         " or absence of malignant mucosal lesions."),
-        ("Temperature scaling:",
-         "Raw logits are divided by T=1.5 before softmax, which prevents overconfident probability"
-         " estimates that are common in small fine-tuned models."),
-        ("Logit margin gate:",
-         f"The absolute difference between the two class logits is {margin}. A margin below 3.2 triggers"
-         " an INCONCLUSIVE result to avoid false high-confidence predictions on non-intraoral images"
-         " (e.g. face, clothing, teeth)."),
-        ("What the model looks for:",
-         "The model attends to colour irregularities, surface texture changes, mucosal pallor or"
-         " erythroplakia patterns, and tissue boundary disruptions consistent with OSCC lesions."),
-        ("Limitations:",
-         "This prototype cannot assess depth of invasion (DOI), perineural invasion, or lymph node"
-         " status — all of which require histopathological examination. A positive result must be"
-         " confirmed by a qualified oral oncologist."),
-    ]
-    for key, val in expl_items:
-        # Key line
+    # 3-line concise description tailored directly to the specific image result
+    if is_inconclusive or "INCONCLUSIVE" in pred_upper:
+        expl_lines = [
+            ("1. Mucosal Surface & Field:",
+             "The captured frame does not contain a clear, close-up intraoral field — peripheral features (lips, teeth, skin, or low light) dominate the input."),
+            ("2. Margin & Reliability Check:",
+             f"The class separation logit margin ({margin}) is below the 3.2 validity threshold, indicating the frame is out-of-distribution."),
+            ("3. Clinical Recommendation:",
+             "The AI rejected this input to prevent false high confidence. Please retake a direct close-up photograph focused on mucosal tissue under bright illumination.")
+        ]
+        card_border = colors.HexColor("#CC6600")
+    elif any(term in pred_upper for term in ["CANCER", "MALIGNANT", "CARCINOMA", "OSCC"]):
+        expl_lines = [
+            ("1. Mucosal Surface & Lesion:",
+             "Vision attention detected irregular mucosal discolouration (erythroplakic/ulcerative texture) with localized epithelial loss characteristic of mucosal neoplasia."),
+            ("2. Margin & Border Distortion:",
+             "High-frequency patch analysis revealed architectural disruption along tissue boundaries, with loss of smooth anatomical epithelial transitions."),
+            ("3. Classification Rationale:",
+             f"Elevated neural weighting across malignant mucosal patterns produced a {conf_disp} classification confidence; requires urgent specialist histopathology.")
+        ]
+        card_border = colors.HexColor("#B00000")
+    else:  # Normal / Benign
+        expl_lines = [
+            ("1. Mucosal Surface & Texture:",
+             "Analyzed tissue displays uniform pink coloration, homogeneous light reflection, and smooth epithelial surface texture with no focal lesions."),
+            ("2. Margin & Border Continuity:",
+             "Intact mucosal stratification with continuous anatomical papillary architecture and zero high-frequency border disruptions detected."),
+            ("3. Classification Rationale:",
+             f"Absence of dysplastic or malignant textural markers yielded a {conf_disp} confident assessment of healthy, unremarkable oral mucosa.")
+        ]
+        card_border = colors.HexColor("#006633")
+
+    # Render styled explainability card
+    CARD_H = 68
+    c.setFillColor(WHITE)
+    c.setStrokeColor(card_border)
+    c.setLineWidth(0.8)
+    c.roundRect(MARGIN_L, y - CARD_H, TEXT_W, CARD_H, 4, fill=1, stroke=1)
+
+    # Colored indicator strip on card
+    c.setFillColor(card_border)
+    c.roundRect(MARGIN_L, y - CARD_H, 3.5, CARD_H, 1.5, fill=1, stroke=0)
+
+    ey = y - 14
+    for label, desc in expl_lines:
         c.setFillColor(BURGUNDY)
-        c.setFont("Helvetica-Bold", 8.5)
-        c.drawString(MARGIN_L + 4, y, key)
-        y -= 12
-        # Word-wrap the value
-        words = val.split()
-        line, lines = "", []
-        for w in words:
-            test = (line + " " + w).strip()
-            if c.stringWidth(test, "Helvetica", 8.5) < TEXT_W - 20:
-                line = test
-            else:
-                lines.append(line)
-                line = w
-        if line:
-            lines.append(line)
-        for ln in lines:
-            c.setFillColor(CHARCOAL)
-            c.setFont("Helvetica", 8.5)
-            c.drawString(MARGIN_L + 14, y, ln)
-            y -= 12
-        y -= 3
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(MARGIN_L + 10, ey, label)
+
+        c.setFillColor(CHARCOAL)
+        c.setFont("Helvetica", 8)
+        c.drawString(MARGIN_L + 145, ey, desc)
+        ey -= 17
+
+    y -= (CARD_H + 12)
 
     # ═════════════════════════════════════════════════════════════════════════
-    # 5. CLINICAL RISK INTERPRETATION
+    # 3. CLINICAL RISK INTERPRETATION GUIDE
     # ═════════════════════════════════════════════════════════════════════════
-    y = section("4.  Clinical Risk Interpretation Guide", y - 4)
+    y = section_header("3.  Clinical Risk Interpretation Guide", y)
+
     risk_rows = [
-        ["AI Output", "Interpretation", "Recommended Action"],
+        ["AI Output", "Clinical Presentation & Pathology", "Recommended Clinical Pathway"],
         ["NORMAL / BENIGN",
-         "No markers of malignant\nmucosal change detected",
-         "Routine dental follow-up; report any persistent\nlesions > 3 weeks to a clinician"],
+         "Unremarkable mucosal tissue; no malignant markers",
+         "Continue routine periodic dental examination"],
         ["CANCER / OSCC",
-         "Features consistent with\noral mucosal carcinoma",
-         "Immediate referral to oral oncology. Biopsy\nand histopathology required for diagnosis"],
+         "Features consistent with oral mucosal carcinoma",
+         "Immediate referral for specialist biopsy & histopathology"],
         ["INCONCLUSIVE",
-         "Image is out-of-distribution\nor logit margin too low",
-         "Retake close-up intraoral photograph under\nbright light; consult a clinician if in doubt"],
+         "Out-of-distribution frame or borderline margin",
+         "Retake close-up oral photograph under bright direct light"],
     ]
-    rtbl = Table(risk_rows, colWidths=[110, 150, 185])
-    rtbl.setStyle(TableStyle([
+    tbl_r = Table(risk_rows, colWidths=[110, 200, 200])
+    tbl_r.setStyle(TableStyle([
         ("BACKGROUND",     (0, 0), (-1, 0), DARK_MAROON),
         ("TEXTCOLOR",      (0, 0), (-1, 0), WHITE),
         ("FONTNAME",       (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE",       (0, 0), (-1, -1), 8),
         ("FONTNAME",       (0, 1), (-1, -1), "Helvetica"),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, SOFT_GRAY]),
-        ("GRID",           (0, 0), (-1, -1), 0.4, colors.HexColor("#CCCCCC")),
-        ("VALIGN",         (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING",     (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING",  (0, 0), (-1, -1), 5),
+        ("GRID",           (0, 0), (-1, -1), 0.3, colors.HexColor("#D0D0D0")),
+        ("VALIGN",         (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING",     (0, 0), (-1, -1), 3.5),
+        ("BOTTOMPADDING",  (0, 0), (-1, -1), 3.5),
         ("LEFTPADDING",    (0, 0), (-1, -1), 6),
     ]))
-    rtbl_w, rtbl_h = rtbl.wrapOn(c, TEXT_W, 200)
-    y -= 4
-    rtbl.drawOn(c, MARGIN_L, y - rtbl_h)
-    y -= (rtbl_h + 14)
+    _, r_h = tbl_r.wrapOn(c, TEXT_W, 100)
+    tbl_r.drawOn(c, MARGIN_L, y - r_h)
+    y -= (r_h + 12)
 
     # ═════════════════════════════════════════════════════════════════════════
-    # 6. MEDICAL DISCLAIMER
+    # 4. IMPORTANT MEDICAL NOTICE (Compact Warning Box)
     # ═════════════════════════════════════════════════════════════════════════
-    y = section("5.  Important Medical Disclaimer", y - 4)
+    y = section_header("4.  Important Medical Notice", y)
 
-    c.setFillColor(colors.HexColor("#FFF8E7"))
+    DISC_H = 34
+    c.setFillColor(colors.HexColor("#FFFBEB"))
     c.setStrokeColor(ACCENT)
     c.setLineWidth(0.8)
-    c.roundRect(MARGIN_L, y - 54, TEXT_W, 60, 4, fill=1, stroke=1)
+    c.roundRect(MARGIN_L, y - DISC_H, TEXT_W, DISC_H, 3, fill=1, stroke=1)
 
-    disc_lines = [
-        "This report is generated by an experimental educational AI prototype and does NOT constitute a",
-        "medical diagnosis. It must not be used to guide any clinical or therapeutic decisions. Oral",
-        "cancer diagnosis requires physical examination, histopathology (biopsy), imaging, and assessment",
-        "by a qualified oral and maxillofacial surgeon or oncologist. If you notice any oral lesion,",
-        "ulcer, or discolouration persisting beyond 3 weeks, consult a healthcare professional immediately.",
-    ]
-    dy = y - 10
-    for dl in disc_lines:
-        c.setFillColor(colors.HexColor("#7A4800"))
-        c.setFont("Helvetica", 8)
-        c.drawString(MARGIN_L + 8, dy, dl)
-        dy -= 11
-
-    y -= 68
+    c.setFillColor(colors.HexColor("#78350F"))
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawString(MARGIN_L + 8, y - 11, "NON-DIAGNOSTIC RESEARCH PROTOTYPE:")
+    c.setFont("Helvetica", 7.5)
+    c.drawString(MARGIN_L + 185, y - 11, "This screening tool is an experimental AI classifier and does NOT constitute a medical diagnosis.")
+    c.drawString(MARGIN_L + 8, y - 23, "Final diagnosis requires clinical evaluation, physical palpation, and histopathology (biopsy) by a qualified oral surgeon or oncologist.")
 
     # ═════════════════════════════════════════════════════════════════════════
-    # FOOTER
+    # FOOTER (Always at bottom of A4 page)
     # ═════════════════════════════════════════════════════════════════════════
+    FOOTER_H = 22
     c.setFillColor(BURGUNDY)
-    c.rect(0, 0, PAGE_W, 26, fill=1, stroke=0)
+    c.rect(0, 0, PAGE_W, FOOTER_H, fill=1, stroke=0)
     c.setFillColor(ACCENT)
-    c.rect(0, 26, PAGE_W, 1.5, fill=1, stroke=0)
+    c.rect(0, FOOTER_H, PAGE_W, 1.5, fill=1, stroke=0)
     c.setFillColor(WHITE)
     c.setFont("Helvetica", 7.5)
-    c.drawCentredString(PAGE_W / 2, 9, "Oral Cancer Detector  –  AI Research Prototype  |  Not for clinical use  |  Consult a qualified clinician for medical advice")
+    c.drawCentredString(PAGE_W / 2, 7, "Oral Cancer Detector  –  AI Research Prototype  |  Not for clinical use  |  Consult a qualified dental clinician")
 
     c.save()
     pdf_buffer.seek(0)

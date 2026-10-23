@@ -1571,6 +1571,9 @@
         alert("Please select or capture an image and click 'Analyze image' first before building a PDF report.");
         return;
       }
+      if (!$("reportImageData").value && lastCapturedDataUrl) {
+        $("reportImageData").value = lastCapturedDataUrl;
+      }
       reportForm.submit();
     }
 
@@ -1801,7 +1804,16 @@
           document.getElementById("reportContrast").value = q.contrast || "";
           document.getElementById("reportSharpness").value = q.edge_variance || "";
           // Embed analysed image thumbnail (use camera snapshot or upload preview)
-          document.getElementById("reportImageData").value = lastCapturedDataUrl || "";
+          if (!lastCapturedDataUrl && file) {
+            const r = new FileReader();
+            r.onload = (e) => {
+              lastCapturedDataUrl = e.target.result;
+              document.getElementById("reportImageData").value = lastCapturedDataUrl;
+            };
+            r.readAsDataURL(file);
+          } else {
+            document.getElementById("reportImageData").value = lastCapturedDataUrl || "";
+          }
           reportForm.hidden = false;
           updateReportButtons(true);
         }
