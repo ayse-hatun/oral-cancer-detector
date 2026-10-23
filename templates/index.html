@@ -992,41 +992,112 @@
     }
 
     .guide-col {
-      font-size: 0.81rem;
+      font-size: 0.82rem;
       line-height: 1.45;
-      padding: 10px 12px;
-      border-radius: 8px;
+      padding: 12px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .guide-col.dont {
-      background: rgba(194, 59, 34, 0.06);
-      border: 1px solid rgba(194, 59, 34, 0.2);
+      background: rgba(194, 59, 34, 0.05);
+      border: 1.5px solid rgba(194, 59, 34, 0.25);
     }
 
     .guide-col.do {
-      background: rgba(46, 204, 113, 0.06);
-      border: 1px solid rgba(46, 204, 113, 0.2);
+      background: rgba(46, 204, 113, 0.05);
+      border: 1.5px solid rgba(46, 204, 113, 0.25);
     }
 
-    .guide-col p {
-      margin: 6px 0 0;
-      color: var(--charcoal);
+    .guide-img-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ECE7DE;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .guide-img {
+      width: 100%;
+      height: 155px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .guide-col:hover .guide-img {
+      transform: scale(1.025);
+    }
+
+    .guide-img-pill {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .guide-img-pill.bad {
+      background: rgba(194, 59, 34, 0.92);
+      color: #fff;
+    }
+
+    .guide-img-pill.good {
+      background: rgba(30, 132, 73, 0.92);
+      color: #fff;
     }
 
     .guide-badge {
-      font-size: 0.74rem;
+      font-size: 0.76rem;
       font-weight: 700;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       text-transform: uppercase;
       letter-spacing: 0.4px;
+      margin-top: 2px;
     }
 
     .guide-badge.bad {
-      color: var(--coral);
+      color: #C0392B;
     }
 
     .guide-badge.good {
       color: #1E8449;
+    }
+
+    .guide-bullets {
+      margin: 2px 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: var(--charcoal);
+    }
+
+    .guide-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .guide-col p.guide-note {
+      margin: 4px 0 0;
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.4;
+      border-top: 1px dashed rgba(0, 0, 0, 0.08);
+      padding-top: 6px;
     }
 
     /* Inconclusive Result Card */
@@ -1342,13 +1413,40 @@
             <span>Clinical Capture Guide — How to prevent false predictions</span>
           </div>
           <div class="clinical-guide-grid">
+            <!-- Bad Example Card -->
             <div class="guide-col dont">
+              <div class="guide-img-wrap">
+                <picture>
+                  <source srcset="/static/guide_bad.webp" type="image/webp">
+                  <img src="/static/guide_bad.jpg" alt="Bad method: distant full face selfie with clenched teeth" class="guide-img">
+                </picture>
+                <span class="guide-img-pill bad">❌ Bad Way</span>
+              </div>
               <span class="guide-badge bad">❌ Avoid Full Face / Teeth</span>
-              <p>Full face selfies, clenched teeth, lips, or clothing. The Swin model was trained strictly on intraoral mucosal tissue and will misclassify face skin as cancer.</p>
+              <ul class="guide-bullets">
+                <li><span>•</span><span>Full face selfies &amp; clothing in frame</span></li>
+                <li><span>•</span><span>Closed lips, clenched teeth, or shadows</span></li>
+                <li><span>•</span><span>Camera held far away from the mouth</span></li>
+              </ul>
+              <p class="guide-note">The model evaluates intraoral mucosa and will misclassify face skin as malignant.</p>
             </div>
+
+            <!-- Good Example Card -->
             <div class="guide-col do">
-              <span class="guide-badge good">✔️ Direct Intraoral Close-up</span>
-              <p>Open mouth wide. Hold camera 10–15 cm close, shining direct light on the specific mucosal tissue (tongue, cheek, gums, or lesion).</p>
+              <div class="guide-img-wrap">
+                <picture>
+                  <source srcset="/static/guide_good.webp" type="image/webp">
+                  <img src="/static/guide_good.jpg" alt="Good method: close-up mouth with direct flashlight illumination" class="guide-img">
+                </picture>
+                <span class="guide-img-pill good">✅ Good Way</span>
+              </div>
+              <span class="guide-badge good">✅ Direct Intraoral Close-up</span>
+              <ul class="guide-bullets">
+                <li><span>•</span><span>Open mouth wide to expose mucosa</span></li>
+                <li><span>•</span><span>Hold camera 10–15 cm close to lesion</span></li>
+                <li><span>•</span><span>Shine smartphone flashlight directly inside</span></li>
+              </ul>
+              <p class="guide-note">Direct illumination of tongue, gums, or cheek mucosa produces accurate classification.</p>
             </div>
           </div>
         </div>
