@@ -8,7 +8,7 @@
 
 An educational deep-learning project for automated oral cavity image classification into **Cancer** and **Non-Cancer** categories. Powered by a fine-tuned Swin Transformer with transfer learning, paired with a web application for image uploads, real-time inference, and downloadable PDF clinical examination reports.
 
-![Oral Cancer Detector Preview](preview.webp)
+
 <img width="568" height="398" alt="image" src="https://github.com/user-attachments/assets/fa2cedc0-e920-4566-8f43-8fc6b02ddfd3" />
 
 ---
