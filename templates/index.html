@@ -1493,6 +1493,12 @@
         <form id="reportForm" action="/download-report" method="POST" hidden>
           <input type="hidden" name="prediction" id="reportPrediction">
           <input type="hidden" name="confidence" id="reportConfidence">
+          <input type="hidden" name="margin" id="reportMargin">
+          <input type="hidden" name="brightness" id="reportBrightness">
+          <input type="hidden" name="contrast" id="reportContrast">
+          <input type="hidden" name="sharpness" id="reportSharpness">
+          <input type="hidden" name="is_inconclusive" id="reportInconclusive">
+          <input type="hidden" name="image_data" id="reportImageData">
           <button type="submit" id="downloadReport" hidden>Download PDF report</button>
         </form>
 
@@ -1511,6 +1517,7 @@
     const pdfReportBtn = $("pdfReportBtn"), camPdfReportBtn = $("camPdfReportBtn");
     const reportForm = $("reportForm"), reportBtn = $("downloadReport");
     let previewUrl = null;
+    let lastCapturedDataUrl = null;  // stores the base64 data-URL of the last analysed image
 
     function el(tag, cls, text) {
       const e = document.createElement(tag);
@@ -1550,6 +1557,12 @@
       updateReportButtons(false);
       $("reportPrediction").value = "";
       $("reportConfidence").value = "";
+      $("reportMargin").value = "";
+      $("reportBrightness").value = "";
+      $("reportContrast").value = "";
+      $("reportSharpness").value = "";
+      $("reportInconclusive").value = "";
+      $("reportImageData").value = "";
     }
 
     function handlePdfReportClick() {
@@ -1572,6 +1585,7 @@
     function setFile(file) {
       resultBox.replaceChildren();
       clearReport();
+      lastCapturedDataUrl = null;
       if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
       if (!file) {
         input.value = "";
@@ -1596,6 +1610,10 @@
       $("fileName").textContent = file.name;
       fileRow.classList.add("show");
       button.disabled = false;
+      // Read as base64 for PDF thumbnail
+      const reader = new FileReader();
+      reader.onload = (e) => { lastCapturedDataUrl = e.target.result; };
+      reader.readAsDataURL(file);
     }
 
     input.addEventListener("change", () => setFile(input.files[0]));
@@ -1775,6 +1793,15 @@
         if (!result.error) {
           document.getElementById("reportPrediction").value = result.prediction;
           document.getElementById("reportConfidence").value = result.confidence;
+          document.getElementById("reportMargin").value = result.margin || "";
+          document.getElementById("reportInconclusive").value = result.is_inconclusive ? "true" : "false";
+          // Image quality metrics from server-side assessment
+          const q = result.quality || {};
+          document.getElementById("reportBrightness").value = q.brightness || "";
+          document.getElementById("reportContrast").value = q.contrast || "";
+          document.getElementById("reportSharpness").value = q.edge_variance || "";
+          // Embed analysed image thumbnail (use camera snapshot or upload preview)
+          document.getElementById("reportImageData").value = lastCapturedDataUrl || "";
           reportForm.hidden = false;
           updateReportButtons(true);
         }
@@ -1960,6 +1987,7 @@
 
       // Freeze frame into review image
       const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+      lastCapturedDataUrl = dataUrl;   // store for PDF report thumbnail
       snapshotImg.src = dataUrl;
       snapshotImg.hidden = false;
       video.hidden = true;
