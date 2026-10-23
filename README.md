@@ -9,6 +9,7 @@
 An educational deep-learning project for automated oral cavity image classification into **Cancer** and **Non-Cancer** categories. Powered by a fine-tuned Swin Transformer with transfer learning, paired with a web application for image uploads, real-time inference, and downloadable PDF clinical examination reports.
 
 ![Oral Cancer Detector Preview](preview.webp)
+<img width="568" height="398" alt="image" src="https://github.com/user-attachments/assets/fa2cedc0-e920-4566-8f43-8fc6b02ddfd3" />
 
 ---
 
@@ -19,6 +20,8 @@ An educational deep-learning project for automated oral cavity image classificat
 - **Automated Clinical PDF Reports**: Instant generation of structured diagnostic assessment summaries powered by ReportLab.
 - **Sample Test Suite**: Built-in test images (`dataset_test/`) for immediate local verification without needing external data.
 - **Git LFS Integration**: Pretrained model weights (`model.safetensors`) tracked seamlessly with Git Large File Storage.
+<img width="542" height="436" alt="image" src="https://github.com/user-attachments/assets/36ec2305-8139-4008-99ab-12514ac66cac" />
+<img width="536" height="379" alt="image" src="https://github.com/user-attachments/assets/f877ae4b-1d63-49e7-a469-18a8388492e6" />
 
 ---
 
@@ -140,6 +143,7 @@ curl -X POST -F "image=@dataset_test/002.jpeg" http://127.0.0.1:5000/predict
 - **Route:** `POST /download-report`
 - **Payload:** `x-www-form-urlencoded` (`prediction`, `confidence`)
 - **Returns:** Attachment `oral_image_report.pdf`
+<img width="433" height="395" alt="image" src="https://github.com/user-attachments/assets/a18f5830-6309-4439-bfd0-8eda77c47dfc" />
 
 ---
 
