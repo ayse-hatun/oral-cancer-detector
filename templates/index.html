@@ -961,9 +961,9 @@
     }
 
     /* Clinical Capture Guidelines Card */
-    /* Clinical Capture Guidelines - Clean Transparent Minimal */
+    /* Clinical Capture Guidelines - Floating 3D Assets (Matching Header Monument Style) */
     .clinical-guide-box {
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       padding: 0;
       background: transparent;
       border: none;
@@ -972,23 +972,26 @@
     .clinical-guide-header {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       font-weight: 700;
-      font-size: 0.84rem;
+      font-size: 0.86rem;
       color: var(--burgundy);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       letter-spacing: 0.2px;
     }
 
     .clinical-guide-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 20px;
+      align-items: end;
     }
 
-    @media (max-width: 650px) {
+    @media (max-width: 580px) {
       .clinical-guide-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
       }
     }
 
@@ -998,64 +1001,52 @@
       border: none;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
     }
 
-    .guide-img-wrap {
+    .guide-img-stage {
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 100%;
-      border-radius: 10px;
-      overflow: hidden;
-      background: transparent;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      height: 160px;
+      background: #FFFFFF;
+      border-radius: 14px;
+      border: 1.5px solid var(--line);
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(47, 62, 70, 0.06);
     }
 
     .guide-img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
+      max-height: 140px;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       display: block;
-      transition: transform 0.25s ease;
+      filter: drop-shadow(0 10px 18px rgba(47, 62, 70, 0.12));
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+      cursor: default;
     }
 
     .guide-col:hover .guide-img {
-      transform: scale(1.02);
-    }
-
-    .guide-img-pill {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      padding: 3px 9px;
-      border-radius: 20px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
-
-    .guide-img-pill.bad {
-      background: rgba(194, 59, 34, 0.92);
-      color: #fff;
-    }
-
-    .guide-img-pill.good {
-      background: rgba(30, 132, 73, 0.92);
-      color: #fff;
+      transform: translateY(-5px) scale(1.03);
+      filter: drop-shadow(0 16px 24px rgba(47, 62, 70, 0.18));
     }
 
     .guide-caption {
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      align-items: center;
+      gap: 2px;
       line-height: 1.3;
-      padding: 0 2px;
     }
 
     .guide-caption strong {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
     }
 
@@ -1385,29 +1376,27 @@
             <span>Photo Capture Guide</span>
           </div>
           <div class="clinical-guide-grid">
-            <!-- Bad Example Card -->
+            <!-- Bad Example: Floating 3D Cutout -->
             <div class="guide-col">
-              <div class="guide-img-wrap">
+              <div class="guide-img-stage">
                 <picture>
                   <source srcset="/static/guide_bad.webp" type="image/webp">
-                  <img src="/static/guide_bad.jpg" alt="Bad method: distant full face selfie with clenched teeth" class="guide-img">
+                  <img src="/static/guide_bad.png" alt="Bad method: distant full face selfie with clenched teeth" class="guide-img">
                 </picture>
-                <span class="guide-img-pill bad">❌ Bad Way</span>
               </div>
               <div class="guide-caption bad">
                 <strong>❌ Avoid Full Face / Teeth</strong>
-                <span>Distant shot, closed teeth, or clothing</span>
+                <span>Distant shot, lips, or closed teeth</span>
               </div>
             </div>
 
-            <!-- Good Example Card -->
+            <!-- Good Example: Floating 3D Cutout -->
             <div class="guide-col">
-              <div class="guide-img-wrap">
+              <div class="guide-img-stage">
                 <picture>
                   <source srcset="/static/guide_good.webp" type="image/webp">
-                  <img src="/static/guide_good.jpg" alt="Good method: close-up mouth with direct flashlight illumination" class="guide-img">
+                  <img src="/static/guide_good.png" alt="Good method: direct intraoral close-up with light" class="guide-img">
                 </picture>
-                <span class="guide-img-pill good">✅ Good Way</span>
               </div>
               <div class="guide-caption good">
                 <strong>✅ Direct Intraoral Close-up</strong>
